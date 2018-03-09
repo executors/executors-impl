@@ -159,7 +159,6 @@ public:
 
 private:
   Executor executor_;
-  Func function_;
 };
 
 // Bind an executor to an object as its associated executor.
