@@ -163,7 +163,7 @@ private:
 
 // Bind an executor to an object as its associated executor.
 template <class Executor, class Func>
-executor_binder<Executor, Func> bind_executor(const Executor& ex, Func f) noexcept
+executor_binder<Executor, Func> bind_executor(const Executor& ex, Func f)
 {
   return {ex, std::move(f)};
 }
