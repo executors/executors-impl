@@ -8,7 +8,8 @@ DIRS = \
 	inline \
 	invoke \
 	nested \
-	simple
+	simple \
+	pipeline
 
 .PHONY: all clean
 
