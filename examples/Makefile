@@ -3,6 +3,7 @@ DIRS = \
 	adapter \
 	async \
 	async_ops \
+	exception \
 	for_each \
 	properties \
 	inline \
