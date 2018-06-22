@@ -6,8 +6,7 @@ namespace execution = std::experimental::execution;
 class inline_executor
 {
 public:
-  inline_executor require(execution::always_blocking_t) const { return *this; }
-  inline_executor require(execution::possibly_blocking_t) const { return *this; }
+  static constexpr execution::blocking_t query(execution::blocking_t) { return execution::blocking.always; }
 
   friend bool operator==(const inline_executor&, const inline_executor&) noexcept
   {
@@ -31,6 +30,6 @@ static_assert(execution::is_oneway_executor_v<inline_executor>, "one way executo
 int main()
 {
   inline_executor ex1;
-  auto ex2 = ex1.require(execution::always_blocking);
+  auto ex2 = execution::require(ex1, execution::blocking.always);
   ex2.execute([]{ std::cout << "we made it\n"; });
 }

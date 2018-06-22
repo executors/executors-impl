@@ -26,7 +26,7 @@ EXAMPLES = \
 	twoway_never_blocking \
 	twoway_possibly_blocking
 
-CXXFLAGS = -std=c++14 -pthread -Wall -Wextra -I../../include
+CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../../include
 
 .PHONY: all clean
 

@@ -11,7 +11,7 @@ using executor = execution::executor<
 int main()
 {
   static_thread_pool pool{1};
-  executor ex = execution::require(pool.executor(), execution::possibly_blocking);
+  executor ex = execution::require(pool.executor(), execution::blocking.possibly);
   ex.bulk_execute([](int n, int&){ std::cout << "part " << n << "\n"; }, 8, []{ return 0; });
   pool.wait();
 }

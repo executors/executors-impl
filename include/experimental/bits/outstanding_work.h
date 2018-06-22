@@ -1,33 +1,28 @@
 #ifndef STD_EXPERIMENTAL_BITS_OUTSTANDING_WORK_H
 #define STD_EXPERIMENTAL_BITS_OUTSTANDING_WORK_H
 
+#include <experimental/bits/enumeration.h>
+
 namespace std {
 namespace experimental {
 inline namespace executors_v1 {
 namespace execution {
-namespace outstanding_work_impl {
 
-template<class Derived>
-struct property_base
+struct outstanding_work_t :
+  impl::enumeration<outstanding_work_t, 2>
 {
-  static constexpr bool is_requirable = true;
-  static constexpr bool is_preferable = true;
+  using impl::enumeration<outstanding_work_t, 2>::enumeration;
 
-  using polymorphic_query_result_type = bool;
+  using untracked_t = enumerator<0>;
+  using tracked_t = enumerator<1>;
 
-  template<class Executor, class = decltype(Executor::query(*static_cast<Derived*>(0)))>
-    static constexpr bool static_query_v = Executor::query(Derived());
-
-  static constexpr bool value() { return true; }
+  static constexpr untracked_t untracked{};
+  static constexpr tracked_t tracked{};
 };
 
-} // namespace outstanding_work_impl
-
-struct outstanding_work_t : outstanding_work_impl::property_base<outstanding_work_t> {};
-struct not_outstanding_work_t : outstanding_work_impl::property_base<not_outstanding_work_t> {};
-
-constexpr outstanding_work_t outstanding_work;
-constexpr not_outstanding_work_t not_outstanding_work;
+constexpr outstanding_work_t outstanding_work{};
+inline constexpr outstanding_work_t::untracked_t outstanding_work_t::untracked;
+inline constexpr outstanding_work_t::tracked_t outstanding_work_t::tracked;
 
 } // namespace execution
 } // inline namespace executors_v1

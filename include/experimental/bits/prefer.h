@@ -1,9 +1,10 @@
 #ifndef STD_EXPERIMENTAL_BITS_PREFER_H
 #define STD_EXPERIMENTAL_BITS_PREFER_H
 
-#include <experimental/bits/has_require_member.h>
-#include <experimental/bits/has_prefer_free.h>
-#include <experimental/bits/is_constexpr_present.h>
+#include <experimental/bits/prefer_free_traits.h>
+#include <experimental/bits/require_member_traits.h>
+#include <experimental/bits/require_static_traits.h>
+#include <utility>
 
 namespace std {
 namespace experimental {
@@ -15,42 +16,51 @@ struct prefer_fn
 {
   template<class Executor, class Property>
   constexpr auto operator()(Executor&& ex, Property&&) const
-    -> typename std::enable_if<std::decay<Property>::type::is_preferable
-      && is_constexpr_present_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value,
-        typename std::decay<Executor>::type>::type
+    -> std::enable_if_t<
+      std::decay_t<Property>::is_preferable
+        && impl::require_static_traits<Executor, Property>::is_valid,
+      typename impl::require_static_traits<Executor, Property>::result_type
+    >
   {
     return std::forward<Executor>(ex);
   }
 
   template<class Executor, class Property>
   constexpr auto operator()(Executor&& ex, Property&& p) const
-    noexcept(noexcept(std::forward<Executor>(ex).require(std::forward<Property>(p))))
-    -> typename std::enable_if<std::decay<Property>::type::is_preferable
-      && !is_constexpr_present_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value,
-        decltype(std::forward<Executor>(ex).require(std::forward<Property>(p)))>::type
+    noexcept(impl::require_member_traits<Executor, Property>::is_noexcept)
+    -> std::enable_if_t<
+      std::decay_t<Property>::is_preferable
+        && !impl::require_static_traits<Executor, Property>::is_valid
+        && impl::require_member_traits<Executor, Property>::is_valid,
+      typename impl::require_member_traits<Executor, Property>::result_type
+    >
   {
     return std::forward<Executor>(ex).require(std::forward<Property>(p));
   }
 
   template<class Executor, class Property>
   constexpr auto operator()(Executor&& ex, Property&& p) const
-    noexcept(noexcept(prefer(std::forward<Executor>(ex), std::forward<Property>(p))))
-    -> typename std::enable_if<std::decay<Property>::type::is_preferable
-      && !is_constexpr_present_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value
-        && !has_require_member_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value
-          && has_prefer_free_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value,
-            decltype(prefer(std::forward<Executor>(ex), std::forward<Property>(p)))>::type
+    noexcept(impl::prefer_free_traits<Executor, Property>::is_noexcept)
+    -> std::enable_if_t<
+      std::decay_t<Property>::is_preferable
+        && !impl::require_static_traits<Executor, Property>::is_valid
+        && !impl::require_member_traits<Executor, Property>::is_valid
+        && impl::prefer_free_traits<Executor, Property>::is_valid,
+      typename impl::prefer_free_traits<Executor, Property>::result_type
+    >
   {
     return prefer(std::forward<Executor>(ex), std::forward<Property>(p));
   }
 
   template<class Executor, class Property>
-  constexpr auto operator()(Executor&& ex, Property&&) const noexcept
-    -> typename std::enable_if<std::decay<Property>::type::is_preferable
-      && !is_constexpr_present_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value
-        && !has_require_member_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value
-          && !has_prefer_free_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value,
-            typename std::decay<Executor>::type>::type
+  constexpr auto operator()(Executor&& ex, Property&&) const
+    -> std::enable_if_t<
+      std::decay_t<Property>::is_preferable
+        && !impl::require_static_traits<Executor, Property>::is_valid
+        && !impl::require_member_traits<Executor, Property>::is_valid
+        && !impl::prefer_free_traits<Executor, Property>::is_valid,
+      typename std::decay_t<Executor>
+    >
   {
     return std::forward<Executor>(ex);
   }

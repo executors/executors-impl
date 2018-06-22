@@ -3,7 +3,7 @@ EXAMPLES = \
 	invoke_2 \
 	invoke_3
 
-CXXFLAGS = -std=c++14 -pthread -Wall -Wextra -I../../include
+CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../../include
 
 .PHONY: all clean
 

@@ -2,6 +2,7 @@
 #define STD_EXPERIMENTAL_BITS_EXECUTOR_INDEX_H
 
 #include <experimental/bits/executor_shape.h>
+#include <type_traits>
 
 namespace std {
 namespace experimental {
@@ -9,20 +10,14 @@ inline namespace executors_v1 {
 namespace execution {
 namespace executor_index_impl {
 
-template<class>
-struct type_check
-{
-  typedef void type;
-};
-
-template<class Executor, class = void>
+template<class Executor, class = std::void_t<>>
 struct eval
 {
   using type = executor_shape_t<Executor>;
 };
 
 template<class Executor>
-struct eval<Executor, typename type_check<typename Executor::index_type>::type>
+struct eval<Executor, std::void_t<typename Executor::index_type>>
 {
   using type = typename decltype(execution::require(std::declval<const Executor&>(), execution::bulk))::index_type;
 };

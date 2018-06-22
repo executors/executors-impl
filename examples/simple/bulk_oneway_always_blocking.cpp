@@ -7,6 +7,6 @@ using std::experimental::static_thread_pool;
 int main()
 {
   static_thread_pool pool{4};
-  auto ex = execution::require(pool.executor(), execution::always_blocking);
+  auto ex = execution::require(pool.executor(), execution::blocking.always);
   ex.bulk_execute([](int n, int&){ std::cout << "part " << n << "\n"; }, 8, []{ return 0; });
 }

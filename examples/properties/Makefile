@@ -5,7 +5,7 @@ EXAMPLES = \
   not_adapted_and_not_preferable \
   priority
 
-CXXFLAGS = -std=c++14 -pthread -Wall -Wextra -I../../include
+CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../../include
 
 .PHONY: all clean
 

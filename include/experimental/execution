@@ -52,30 +52,22 @@ struct single_t;
 struct bulk_t;
 
 // Blocking behaviour.
-struct never_blocking_t;
-struct possibly_blocking_t;
-struct always_blocking_t;
+struct blocking_t;
 
 // Allow adaptation of blocking and directionality (e.g. twoway in terms of oneway).
-struct adaptable_blocking_t;
-struct not_adaptable_blocking_t;
+struct blocking_adaptation_t;
 
-// Whether submitted tasks represent a continuation.
-struct continuation_t;
-struct not_continuation_t;
+// Whether submitted tasks represent a fork or continuation of the control flow.
+struct relationship_t;
 
 // Whether there is outstanding work, i.e. an indication of likely task submission in the future.
 struct outstanding_work_t;
-struct not_outstanding_work_t;
 
 // Properties for bulk execution forward progress guarantees.
-struct bulk_sequenced_execution_t;
-struct bulk_parallel_execution_t;
-struct bulk_unsequenced_execution_t;
+struct bulk_guarantee_t;
 
 // Properties for mapping of execution on to threads.
-struct thread_execution_mapping_t;
-struct new_thread_execution_mapping_t;
+struct mapping_t;
 
 // Memory allocations.
 template<class ProtoAllocator> struct allocator_t;
@@ -123,11 +115,12 @@ template<class InnerProperty> struct prefer_only;
 #include <experimental/bits/context.h>
 #include <experimental/bits/directionality.h>
 #include <experimental/bits/cardinality.h>
-#include <experimental/bits/continuation.h>
 #include <experimental/bits/blocking.h>
+#include <experimental/bits/blocking_adaptation.h>
+#include <experimental/bits/relationship.h>
 #include <experimental/bits/outstanding_work.h>
-#include <experimental/bits/bulk_execution.h>
-#include <experimental/bits/thread_execution.h>
+#include <experimental/bits/bulk_guarantee.h>
+#include <experimental/bits/mapping.h>
 #include <experimental/bits/allocator.h>
 #include <experimental/bits/executor_future.h>
 #include <experimental/bits/executor_shape.h>

@@ -352,7 +352,7 @@ struct impl : impl_base
   void* query_helper(property_list<Head, Tail...>, const type_info& t, const void* p, typename std::enable_if<can_query_v<Executor, Head>>::type* = 0) const
   {
     if (t == typeid(Head))
-      return new typename Head::polymorphic_query_result_type(execution::query(executor_, *static_cast<const Head*>(p)));
+      return new std::tuple<typename Head::polymorphic_query_result_type>(execution::query(executor_, *static_cast<const Head*>(p)));
     return query_helper(property_list<Tail...>{}, t, p);
   }
 
@@ -491,13 +491,32 @@ public:
 
   template<class Property>
   auto query(const Property& p) const
-    -> typename executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type
+    -> typename std::enable_if<
+      executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+        || executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
+      typename executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
     executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     using result_type = typename decltype(p1)::polymorphic_query_result_type;
+    using tuple_type = std::tuple<result_type>;
     if (!impl_) throw bad_executor();
-    std::unique_ptr<result_type> result(static_cast<result_type*>(impl_->query(typeid(p1), &p1)));
-    return result ? *result : result_type();
+    std::unique_ptr<tuple_type> result(static_cast<tuple_type*>(impl_->query(typeid(p1), &p1)));
+    return result ? std::get<0>(*result) : result_type();
+  }
+
+  template<class Property>
+  auto query(const Property& p) const
+    -> typename std::enable_if<
+      !executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+        && !executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
+      typename executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
+  {
+    executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    using result_type = typename decltype(p1)::polymorphic_query_result_type;
+    using tuple_type = std::tuple<result_type>;
+    if (!impl_) throw bad_executor();
+    std::unique_ptr<tuple_type> result(static_cast<tuple_type*>(impl_->query(typeid(p1), &p1)));
+    return std::get<0>(*result);
   }
 
   template<class Function,

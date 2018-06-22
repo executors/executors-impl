@@ -3,7 +3,7 @@ EXAMPLES = \
 	async_2 \
 	async_3
 
-CXXFLAGS = -std=c++14 -pthread -Wall -Wextra -I../../include
+CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../../include
 
 .PHONY: all clean
 

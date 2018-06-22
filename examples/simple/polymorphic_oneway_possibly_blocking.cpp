@@ -11,7 +11,7 @@ using executor = execution::executor<
 int main()
 {
   static_thread_pool pool{1};
-  executor ex = execution::require(pool.executor(), execution::possibly_blocking);
+  executor ex = execution::require(pool.executor(), execution::blocking.possibly);
   ex.execute([]{ std::cout << "we made it\n"; });
   pool.wait();
 }

@@ -2,6 +2,7 @@
 #define STD_EXPERIMENTAL_BITS_EXECUTOR_SHAPE_H
 
 #include <cstddef>
+#include <type_traits>
 
 namespace std {
 namespace experimental {
@@ -9,20 +10,14 @@ inline namespace executors_v1 {
 namespace execution {
 namespace executor_shape_impl {
 
-template<class>
-struct type_check
-{
-  typedef void type;
-};
-
-template<class Executor, class = void>
+template<class Executor, class = std::void_t<>>
 struct eval
 {
   using type = std::size_t;
 };
 
 template<class Executor>
-struct eval<Executor, typename type_check<typename Executor::shape_type>::type>
+struct eval<Executor, std::void_t<typename Executor::shape_type>>
 {
   using type = typename decltype(execution::require(std::declval<const Executor&>(), execution::bulk))::shape_type;
 };

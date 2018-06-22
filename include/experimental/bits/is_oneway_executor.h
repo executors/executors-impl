@@ -9,28 +9,22 @@ inline namespace executors_v1 {
 namespace execution {
 namespace is_oneway_executor_impl {
 
-template<class...>
-struct type_check
-{
-  typedef void type;
-};
-
 struct nullary_function
 {
   void operator()() {}
 };
 
-template<class T, class = void>
+template<class T, class = std::void_t<>>
 struct eval : std::false_type {};
 
 template<class T>
 struct eval<T,
-  typename type_check<
+  std::void_t<
     typename std::enable_if<std::is_same<void, decltype(std::declval<const T&>().execute(std::declval<nullary_function>()))>::value>::type,
     typename std::enable_if<std::is_same<void, decltype(std::declval<const T&>().execute(std::declval<nullary_function&>()))>::value>::type,
     typename std::enable_if<std::is_same<void, decltype(std::declval<const T&>().execute(std::declval<const nullary_function&>()))>::value>::type,
     typename std::enable_if<std::is_same<void, decltype(std::declval<const T&>().execute(std::declval<nullary_function&&>()))>::value>::type
-	>::type> : is_executor_impl::eval<T> {};
+	>> : is_executor_impl::eval<T> {};
 
 } // namespace is_oneway_executor_impl
 

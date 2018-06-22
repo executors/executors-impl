@@ -11,20 +11,14 @@ inline namespace executors_v1 {
 namespace execution {
 namespace can_require_impl {
 
-template<class>
-struct type_check
-{
-  typedef void type;
-};
-
-template<class Executor, class Properties, class = void>
+template<class Executor, class Properties, class = std::void_t<>>
 struct eval : std::false_type {};
 
 template<class Executor, class... Properties>
 struct eval<Executor, std::tuple<Properties...>,
-  typename type_check<decltype(
+  std::void_t<decltype(
     ::std::experimental::executors_v1::execution::require(std::declval<Executor>(), std::declval<Properties>()...)
-  )>::type> : std::true_type {};
+  )>> : std::true_type {};
 
 } // namespace can_require_impl
 

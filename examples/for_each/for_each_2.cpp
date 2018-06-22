@@ -34,7 +34,7 @@ class system_thread_pool_bulk_executor
       return false;
     }
 
-    system_thread_pool_bulk_executor require(execution::bulk_parallel_execution_t) const { return *this; }
+    system_thread_pool_bulk_executor require(execution::bulk_guarantee_t::parallel_t) const { return *this; }
 
     template<class Function, class ResultFactory, class SharedFactory>
     auto bulk_twoway_execute(Function f, size_t n, ResultFactory rf, SharedFactory sf) const
@@ -102,9 +102,9 @@ constexpr struct ignored {} ignore;
 
 } // end impl
 
-class parallel_policy : public impl::basic_execution_policy<execution::bulk_parallel_execution_t, impl::system_thread_pool_bulk_executor>
+class parallel_policy : public impl::basic_execution_policy<execution::bulk_guarantee_t::parallel_t, impl::system_thread_pool_bulk_executor>
 {
-  using super_t = impl::basic_execution_policy<execution::bulk_parallel_execution_t, impl::system_thread_pool_bulk_executor>;
+  using super_t = impl::basic_execution_policy<execution::bulk_guarantee_t::parallel_t, impl::system_thread_pool_bulk_executor>;
 
   public:
     using super_t::super_t;

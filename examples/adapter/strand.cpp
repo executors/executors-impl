@@ -16,7 +16,7 @@ struct strand_state
   std::thread::id owning_thread_;
 };
 
-template <class Executor, class Blocking = execution::possibly_blocking_t>
+template <class Executor, class Blocking = execution::blocking_t::possibly_t>
 class strand
 {
   template <class, class> friend class strand;
@@ -75,19 +75,19 @@ public:
     -> strand<decltype(inner_declval<Property>().require(p)), Blocking>
       { return { state_, ex_.require(p) }; }
 
-  auto require(execution::never_blocking_t) const
-    -> strand<decltype(std::declval<Executor>().require(execution::never_blocking)), execution::never_blocking_t>
+  auto require(execution::blocking_t::never_t) const
+    -> strand<decltype(std::declval<Executor>().require(execution::blocking.never)), execution::blocking_t::never_t>
   {
-    return {state_, ex_.require(execution::never_blocking)};
+    return {state_, ex_.require(execution::blocking.never)};
   };
 
-  auto require(execution::possibly_blocking_t) const
-    -> strand<decltype(std::declval<Executor>().require(execution::possibly_blocking)), execution::possibly_blocking_t>
+  auto require(execution::blocking_t::possibly_t) const
+    -> strand<decltype(std::declval<Executor>().require(execution::blocking.possibly)), execution::blocking_t::possibly_t>
   {
-    return {state_, ex_.require(execution::possibly_blocking)};
+    return {state_, ex_.require(execution::blocking.possibly)};
   };
 
-  void require(execution::always_blocking_t) const = delete;
+  void require(execution::blocking_t::always_t) const = delete;
 
   template<class Property> auto query(const Property& p) const
     -> decltype(inner_declval<Property>().query(p))
@@ -112,7 +112,7 @@ public:
     bool in_strand = (state_->owning_thread_ == std::this_thread::get_id());
 
     // Execute immediately if possible.
-    if (std::is_same<Blocking, execution::possibly_blocking_t>::value && in_strand)
+    if (std::is_same<Blocking, execution::blocking_t::possibly_t>::value && in_strand)
     {
       lock.unlock();
       f();
@@ -126,7 +126,7 @@ public:
     lock.unlock();
 
     // Need to schedule the strand to run the queued items.
-    ex_.execute([s = this->require(execution::never_blocking).require(execution::continuation)]() mutable
+    ex_.execute([s = this->require(execution::blocking.never).require(execution::relationship.continuation)]() mutable
         {
           s.run_first_item();
         });
@@ -139,11 +139,11 @@ static_assert(execution::is_oneway_executor_v<
 
 struct foo
 {
-  decltype(std::declval<strand<static_thread_pool::executor_type>>().require(execution::never_blocking)) strand_;
+  decltype(std::declval<strand<static_thread_pool::executor_type>>().require(execution::blocking.never)) strand_;
   int count_{0};
 
   explicit foo(const strand<static_thread_pool::executor_type>& s)
-    : strand_(s.require(execution::never_blocking))
+    : strand_(s.require(execution::blocking.never))
   {
   }
 
@@ -153,7 +153,7 @@ struct foo
     {
       std::this_thread::sleep_for(std::chrono::seconds(1));
       std::cout << "count is " << count_ << "\n";
-      strand_.require(execution::possibly_blocking).execute([count = count_]{ std::cout << "nested count is " << count << "\n"; });
+      strand_.require(execution::blocking.possibly).execute([count = count_]{ std::cout << "nested count is " << count << "\n"; });
       ++count_;
       strand_.execute(*this);
     }
@@ -165,7 +165,7 @@ int main()
   static_thread_pool pool{2};
   strand<static_thread_pool::executor_type> s1(pool.executor());
   assert(&execution::query(s1, execution::context) == &pool);
-  s1.require(execution::never_blocking).execute(foo{s1});
-  s1.require(execution::possibly_blocking).execute([]{ std::cout << "After 0, before 1\n"; });
+  s1.require(execution::blocking.never).execute(foo{s1});
+  s1.require(execution::blocking.possibly).execute([]{ std::cout << "After 0, before 1\n"; });
   pool.wait();
 }

@@ -34,8 +34,8 @@ class system_thread_pool_bulk_executor
       return false;
     }
 
-    system_thread_pool_bulk_executor require(execution::bulk_parallel_execution_t) const { return *this; }
-    bool query(execution::bulk_parallel_execution_t) const { return true; }
+    system_thread_pool_bulk_executor require(execution::bulk_guarantee_t::parallel_t) const { return *this; }
+    bool query(execution::bulk_guarantee_t::parallel_t) const { return true; }
 
     template<class Function, class ResultFactory, class SharedFactory>
     auto bulk_twoway_execute(Function f, size_t n, ResultFactory rf, SharedFactory sf) const
@@ -103,9 +103,9 @@ constexpr struct ignored {} ignore;
 
 } // end impl
 
-class parallel_policy : public impl::basic_execution_policy<execution::bulk_parallel_execution_t, impl::system_thread_pool_bulk_executor>
+class parallel_policy : public impl::basic_execution_policy<execution::bulk_guarantee_t::parallel_t, impl::system_thread_pool_bulk_executor>
 {
-  using super_t = impl::basic_execution_policy<execution::bulk_parallel_execution_t, impl::system_thread_pool_bulk_executor>;
+  using super_t = impl::basic_execution_policy<execution::bulk_guarantee_t::parallel_t, impl::system_thread_pool_bulk_executor>;
 
   public:
     using super_t::super_t;
@@ -118,7 +118,7 @@ void for_each(ExecutionPolicy&& policy, RandomAccessIterator first, RandomAccess
 {
   auto n = last - first;
 
-  auto twoway_bulk_exec = execution::require(policy.executor(), execution::adaptable_blocking, execution::bulk, execution::twoway);
+  auto twoway_bulk_exec = execution::require(policy.executor(), execution::blocking_adaptation.allowed, execution::bulk, execution::twoway);
 
   twoway_bulk_exec.bulk_twoway_execute([=](size_t idx, impl::ignored&)
   {
@@ -143,12 +143,12 @@ public:
     return false;
   }
 
-  inline_executor require(execution::bulk_parallel_execution_t) const
+  inline_executor require(execution::bulk_guarantee_t::parallel_t) const
   {
     return *this;
   }
 
-  bool query(execution::bulk_parallel_execution_t) const
+  bool query(execution::bulk_guarantee_t::parallel_t) const
   {
     return true;
   }

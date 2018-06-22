@@ -9,12 +9,6 @@ inline namespace executors_v1 {
 namespace execution {
 namespace is_bulk_twoway_executor_impl {
 
-template<class...>
-struct type_check
-{
-  typedef void type;
-};
-
 struct result {};
 
 struct result_factory
@@ -34,12 +28,12 @@ struct bulk_function
   void operator()(std::size_t, result&, shared_state&) {}
 };
 
-template<class T, class = void>
+template<class T, class = std::void_t<>>
 struct eval : std::false_type {};
 
 template<class T>
 struct eval<T,
-  typename type_check<
+  std::void_t<
     decltype(static_cast<const result&>(std::declval<const T&>().bulk_twoway_execute(std::declval<bulk_function>(),
             1, std::declval<result_factory>(), std::declval<shared_factory>()).get())),
     decltype(static_cast<const result&>(std::declval<const T&>().bulk_twoway_execute(std::declval<bulk_function&>(),
@@ -48,7 +42,7 @@ struct eval<T,
             1, std::declval<result_factory>(), std::declval<shared_factory>()).get())),
     decltype(static_cast<const result&>(std::declval<const T&>().bulk_twoway_execute(std::declval<bulk_function&&>(),
             1, std::declval<result_factory>(), std::declval<shared_factory>()).get()))
-	>::type> : is_executor_impl::eval<T> {};
+	>> : is_executor_impl::eval<T> {};
 
 } // namespace is_bulk_twoway_executor_impl
 

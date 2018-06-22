@@ -3,7 +3,7 @@ EXAMPLES = \
   future \
   static_thread_pool
 
-CXXFLAGS = -std=c++14 -pthread -Wall -Wextra -I../include -g
+CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../include -g
 
 .PHONY: all clean
 

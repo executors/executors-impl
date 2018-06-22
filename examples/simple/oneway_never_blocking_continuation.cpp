@@ -7,7 +7,7 @@ using std::experimental::static_thread_pool;
 int main()
 {
   static_thread_pool pool{1};
-  auto ex = execution::require(pool.executor(), execution::never_blocking, execution::continuation);
+  auto ex = execution::require(pool.executor(), execution::blocking.never, execution::relationship.continuation);
   ex.execute([]{ std::cout << "we made it\n"; });
   pool.wait();
 }

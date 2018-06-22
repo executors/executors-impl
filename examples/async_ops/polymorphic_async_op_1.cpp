@@ -10,14 +10,14 @@ using std::experimental::static_thread_pool;
 using task_executor = execution::executor<
         execution::oneway_t,
         execution::single_t,
-        execution::never_blocking_t>;
+        execution::blocking_t::never_t>;
 
 using completion_executor = execution::executor<
         execution::oneway_t,
         execution::single_t,
-        execution::never_blocking_t,
-        execution::prefer_only<execution::possibly_blocking_t>,
-        execution::prefer_only<execution::outstanding_work_t>>;
+        execution::blocking_t::never_t,
+        execution::prefer_only<execution::blocking_t::possibly_t>,
+        execution::prefer_only<execution::outstanding_work_t::tracked_t>>;
 
 // An operation that doubles a value asynchronously.
 void my_twoway_operation_1(const task_executor& tex, int n,
@@ -27,7 +27,7 @@ void my_twoway_operation_1(const task_executor& tex, int n,
   {
     // Nothing to do. Operation finishes immediately.
     // Specify non-blocking to prevent stack overflow.
-    cex.require(execution::never_blocking).execute(
+    cex.require(execution::blocking.never).execute(
         [h = std::move(h), n]() mutable
         {
           h(n);
@@ -36,12 +36,12 @@ void my_twoway_operation_1(const task_executor& tex, int n,
   else
   {
     // Simulate an asynchronous operation.
-    tex.require(execution::never_blocking).execute(
-        [n, cex = execution::prefer(cex, execution::outstanding_work), h = std::move(h)]() mutable
+    tex.require(execution::blocking.never).execute(
+        [n, cex = execution::prefer(cex, execution::outstanding_work.tracked), h = std::move(h)]() mutable
         {
           int result = n * 2;
           std::this_thread::sleep_for(std::chrono::seconds(1)); // Simulate long running work.
-          execution::prefer(cex, execution::possibly_blocking).execute(
+          execution::prefer(cex, execution::blocking.possibly).execute(
               [h = std::move(h), result]() mutable
               {
                 h(result);

@@ -9,12 +9,6 @@ inline namespace executors_v1 {
 namespace execution {
 namespace is_twoway_executor_impl {
 
-template<class...>
-struct type_check
-{
-  typedef void type;
-};
-
 struct dummy {};
 
 struct nullary_function
@@ -22,17 +16,17 @@ struct nullary_function
   dummy operator()() { return {}; }
 };
 
-template<class T, class = void>
+template<class T, class = std::void_t<>>
 struct eval : std::false_type {};
 
 template<class T>
 struct eval<T,
-  typename type_check<
+  std::void_t<
     decltype(static_cast<const dummy&>(std::declval<const T&>().twoway_execute(std::declval<nullary_function>()).get())),
     decltype(static_cast<const dummy&>(std::declval<const T&>().twoway_execute(std::declval<nullary_function&>()).get())),
     decltype(static_cast<const dummy&>(std::declval<const T&>().twoway_execute(std::declval<const nullary_function&>()).get())),
     decltype(static_cast<const dummy&>(std::declval<const T&>().twoway_execute(std::declval<nullary_function&&>()).get()))
-	>::type> : is_executor_impl::eval<T> {};
+	>> : is_executor_impl::eval<T> {};
 
 } // namespace is_twoway_executor_impl
 

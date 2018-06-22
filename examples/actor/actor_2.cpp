@@ -93,7 +93,7 @@ public:
   {
     // Execute the message handler in the context of the target's executor.
     std::experimental::execution::require(to->executor_,
-      std::experimental::execution::never_blocking).execute(
+      std::experimental::execution::blocking.never).execute(
         [=, msg=std::move(msg)]() mutable
         {
           to->call_handler(std::move(msg), from);
@@ -104,8 +104,8 @@ protected:
   using executor_type = std::experimental::execution::executor<
       std::experimental::execution::oneway_t,
       std::experimental::execution::single_t,
-      std::experimental::execution::never_blocking_t,
-      std::experimental::execution::prefer_only<std::experimental::execution::continuation_t>>;
+      std::experimental::execution::blocking_t::never_t,
+      std::experimental::execution::prefer_only<std::experimental::execution::relationship_t::continuation_t>>;
 
   // Construct the actor to use the specified pool for all message handlers.
   actor(const executor_type& ex)
@@ -148,8 +148,8 @@ protected:
     // Execute the message handler in the context of the target's executor.
     std::experimental::execution::prefer(
       std::experimental::execution::require(to->executor_,
-        std::experimental::execution::never_blocking),
-          std::experimental::execution::continuation).execute(
+        std::experimental::execution::blocking.never),
+          std::experimental::execution::relationship.continuation).execute(
             [=, msg=std::move(msg), from=this]() mutable
             {
               to->call_handler(std::move(msg), from);

@@ -92,7 +92,7 @@ public:
   {
     // Execute the message handler in the context of the target's executor.
     std::experimental::execution::require(to->executor_,
-      std::experimental::execution::never_blocking).execute(
+      std::experimental::execution::blocking.never).execute(
         [=, msg=std::move(msg)]() mutable
         {
           to->call_handler(std::move(msg), from);
@@ -141,8 +141,8 @@ protected:
     // Execute the message handler in the context of the target's executor.
     std::experimental::execution::prefer(
       std::experimental::execution::require(to->executor_,
-        std::experimental::execution::never_blocking),
-          std::experimental::execution::continuation).execute(
+        std::experimental::execution::blocking.never),
+          std::experimental::execution::relationship.continuation).execute(
             [=, msg=std::move(msg), from=this]() mutable
             {
               to->call_handler(std::move(msg), from);

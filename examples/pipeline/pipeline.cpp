@@ -45,7 +45,7 @@ public:
     return threads;
   }
 
-  static bool query(execution::never_blocking_t)
+  static bool query(execution::blocking_t::never_t)
   {
     return true;
   }
@@ -261,7 +261,7 @@ std::future<void> pipeline(queue_back<T> in, F f)
   // caller can wait for the pipeline to finish.
   return execution::require(ex,
       execution::single,
-      execution::adaptable_blocking,
+      execution::blocking_adaptation.allowed,
       execution::twoway
     ).twoway_execute(
       [in, f = std::move(f)]() mutable

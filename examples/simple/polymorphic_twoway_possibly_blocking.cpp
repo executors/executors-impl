@@ -12,7 +12,7 @@ using executor = execution::executor<
 int main()
 {
   static_thread_pool pool{1};
-  executor ex = execution::require(pool.executor(), execution::possibly_blocking);
+  executor ex = execution::require(pool.executor(), execution::blocking.possibly);
   future<int> f = ex.twoway_execute([]{ return 42; });
   std::cout << "result is " << f.get() << "\n";
 }

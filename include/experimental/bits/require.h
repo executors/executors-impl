@@ -1,12 +1,9 @@
 #ifndef STD_EXPERIMENTAL_BITS_REQUIRE_H
 #define STD_EXPERIMENTAL_BITS_REQUIRE_H
 
-#include <experimental/bits/has_require_member.h>
-#include <experimental/bits/is_twoway_executor.h>
-#include <experimental/bits/is_oneway_executor.h>
-#include <experimental/bits/is_bulk_oneway_executor.h>
-#include <experimental/bits/is_bulk_twoway_executor.h>
-#include <experimental/bits/is_constexpr_present.h>
+#include <experimental/bits/require_free_traits.h>
+#include <experimental/bits/require_member_traits.h>
+#include <experimental/bits/require_static_traits.h>
 #include <utility>
 
 namespace std {
@@ -19,30 +16,38 @@ struct require_fn
 {
   template<class Executor, class Property>
   constexpr auto operator()(Executor&& ex, Property&&) const
-    -> typename std::enable_if<std::decay<Property>::type::is_requirable
-      && is_constexpr_present_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value,
-        typename std::decay<Executor>::type>::type
+    -> std::enable_if_t<
+      std::decay_t<Property>::is_requirable
+        && impl::require_static_traits<Executor, Property>::is_valid,
+      typename impl::require_static_traits<Executor, Property>::result_type
+    >
   {
     return std::forward<Executor>(ex);
   }
 
   template<class Executor, class Property>
   constexpr auto operator()(Executor&& ex, Property&& p) const
-    noexcept(noexcept(std::forward<Executor>(ex).require(std::forward<Property>(p))))
-    -> typename std::enable_if<std::decay<Property>::type::is_requirable
-      && !is_constexpr_present_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value,
-        decltype(std::forward<Executor>(ex).require(std::forward<Property>(p)))>::type
+    noexcept(impl::require_member_traits<Executor, Property>::is_noexcept)
+    -> std::enable_if_t<
+      std::decay_t<Property>::is_requirable
+        && !impl::require_static_traits<Executor, Property>::is_valid
+        && impl::require_member_traits<Executor, Property>::is_valid,
+      typename impl::require_member_traits<Executor, Property>::result_type
+    >
   {
     return std::forward<Executor>(ex).require(std::forward<Property>(p));
   }
 
   template<class Executor, class Property>
   constexpr auto operator()(Executor&& ex, Property&& p) const
-    noexcept(noexcept(require(std::forward<Executor>(ex), std::forward<Property>(p))))
-    -> typename std::enable_if<std::decay<Property>::type::is_requirable
-      && !is_constexpr_present_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value
-        && !has_require_member_impl::eval<typename std::decay<Executor>::type, typename std::decay<Property>::type>::value,
-          decltype(require(std::forward<Executor>(ex), std::forward<Property>(p)))>::type
+    noexcept(impl::require_free_traits<Executor, Property>::is_noexcept)
+    -> std::enable_if_t<
+      std::decay_t<Property>::is_requirable
+        && !impl::require_static_traits<Executor, Property>::is_valid
+        && !impl::require_member_traits<Executor, Property>::is_valid
+        && impl::require_free_traits<Executor, Property>::is_valid,
+      typename impl::require_free_traits<Executor, Property>::result_type
+    >
   {
     return require(std::forward<Executor>(ex), std::forward<Property>(p));
   }

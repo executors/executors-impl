@@ -24,7 +24,7 @@ EXAMPLES = \
 	polymorphic_oneway_possibly_blocking_calls_oneway_never_blocking_continuation \
 	polymorphic_oneway_possibly_blocking_calls_oneway_possibly_blocking
 
-CXXFLAGS = -std=c++14 -pthread -Wall -Wextra -I../../include
+CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../../include
 
 .PHONY: all clean
 

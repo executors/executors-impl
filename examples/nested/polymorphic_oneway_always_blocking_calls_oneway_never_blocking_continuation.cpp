@@ -7,16 +7,16 @@ using std::experimental::static_thread_pool;
 using executor = execution::executor<
   execution::oneway_t,
   execution::single_t,
-  execution::always_blocking_t,
-  execution::never_blocking_t,
-  execution::prefer_only<execution::continuation_t>>;
+  execution::blocking_t::always_t,
+  execution::blocking_t::never_t,
+  execution::prefer_only<execution::relationship_t::continuation_t>>;
 
 int main()
 {
   static_thread_pool pool{1};
-  executor ex = execution::require(pool.executor(), execution::always_blocking);
+  executor ex = execution::require(pool.executor(), execution::blocking.always);
   std::cout << "before submission\n";
-  ex.execute([ex = execution::prefer(execution::require(ex, execution::never_blocking), execution::continuation)]{
+  ex.execute([ex = execution::prefer(execution::require(ex, execution::blocking.never), execution::relationship.continuation)]{
       std::cout << "outer starts\n";
       ex.execute([]{ std::cout << "inner\n"; });
       std::cout << "outer ends\n";

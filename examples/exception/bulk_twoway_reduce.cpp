@@ -8,7 +8,7 @@ using std::experimental::executors_v1::future;
 int main()
 {
   static_thread_pool pool{1};
-  auto ex = execution::require(pool.executor(), execution::never_blocking);
+  auto ex = execution::require(pool.executor(), execution::blocking.never);
   future<std::pair<int, std::exception_ptr>> f = ex.bulk_twoway_execute(
     [](
         int n,

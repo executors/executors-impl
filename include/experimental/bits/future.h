@@ -225,7 +225,7 @@ auto future<R>::then(Executor ex, Function f)
           // or execution::require(ex, execution::non_blocking).execute(std::move(func)); // #3: Safest, least flexible
         }
         else
-          execution::prefer(ex, execution::possibly_blocking).execute(std::move(func));
+          execution::prefer(ex, execution::blocking.possibly).execute(std::move(func));
       });
 
   return future_impl::unwrap(std::move(fut));

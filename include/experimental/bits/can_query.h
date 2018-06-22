@@ -11,20 +11,14 @@ inline namespace executors_v1 {
 namespace execution {
 namespace can_query_impl {
 
-template<class>
-struct type_check
-{
-  typedef void type;
-};
-
-template<class Executor, class Properties, class = void>
+template<class Executor, class Properties, class = std::void_t<>>
 struct eval : std::false_type {};
 
 template<class Executor, class Property>
 struct eval<Executor, std::tuple<Property>,
-  typename type_check<decltype(
+  std::void_t<decltype(
     ::std::experimental::executors_v1::execution::query(std::declval<Executor>(), std::declval<Property>())
-  )>::type> : std::true_type {};
+  )>> : std::true_type {};
 
 } // namespace can_query_impl
 
