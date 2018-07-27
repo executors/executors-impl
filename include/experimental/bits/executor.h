@@ -76,6 +76,23 @@ struct contains_exact_property_list<property_list<>, SupportableProperties...> :
 template<class PropertyList, class... SupportableProperties>
 static constexpr bool contains_exact_property_list_v = contains_exact_property_list<PropertyList, SupportableProperties...>::value;
 
+template<class Executor, class... SupportableProperties>
+struct is_valid_target;
+
+template<class Executor>
+struct is_valid_target<Executor> : std::true_type {};
+
+template<class Executor, class Head, class... Tail>
+struct is_valid_target<Executor, Head, Tail...>
+  : std::integral_constant<bool,
+      (!Head::is_requirable || can_require_v<Executor, Head>)
+      && (!Head::is_preferable || can_prefer_v<Executor, Head>)
+      && (Head::is_requirable || Head::is_preferable || can_query_v<Executor, Head>)
+      && is_valid_target<Executor, Tail...>::value> {};
+
+template<class Executor, class... SupportableProperties>
+static constexpr bool is_valid_target_v = is_valid_target<Executor, SupportableProperties...>::value;
+
 struct identity_property
 {
   static constexpr bool is_requirable = true;
@@ -397,7 +414,9 @@ public:
     e.impl_ = nullptr;
   }
 
-  template<class Executor> executor(Executor e)
+  template<class Executor> executor(Executor e,
+      typename std::enable_if<executor_impl::is_valid_target_v<
+        Executor, SupportableProperties...>>::type* = 0)
   {
     auto e2 = execution::require(std::move(e),
         executor_impl::conditional_property_t<single_t, SupportableProperties...>{},
