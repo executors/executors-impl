@@ -344,7 +344,8 @@ public:
 
   template<class Executor> polymorphic_executor_type(Executor e,
       typename std::enable_if<oneway_executor_impl::is_valid_target_v<
-        Executor, SupportableProperties...>>::type* = 0)
+        typename std::enable_if<!std::is_same<Executor, polymorphic_executor_type>::value, Executor>::type,
+          SupportableProperties...>>::type* = 0)
   {
     auto e2 = execution::require(std::move(e), oneway);
     impl_ = new oneway_executor_impl::impl<decltype(e2), SupportableProperties...>(std::move(e2));
