@@ -4,7 +4,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <cstddef>
-#include <experimental/future>
+#include <future>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -20,7 +20,7 @@ class static_thread_pool
 {
   template<class, class T, class U> struct dependent_is_same : std::is_same<T, U> {};
 
-  template<class Blocking, class Continuation, class Work, class ProtoAllocator>
+  template<class Interface, class Blocking, class Continuation, class Work, class ProtoAllocator>
   class executor_impl
   {
     friend class static_thread_pool;
@@ -39,26 +39,32 @@ class static_thread_pool
     // Associated execution context.
     static_thread_pool& query(execution::context_t) const noexcept { return *pool_; }
 
+    // Interface.
+    executor_impl<execution::oneway_t, Blocking, Continuation, Work, ProtoAllocator>
+      require(execution::oneway_t) const { return {pool_, allocator_}; }
+    executor_impl<execution::bulk_oneway_t, Blocking, Continuation, Work, ProtoAllocator>
+      require(execution::bulk_oneway_t) const { return {pool_, allocator_}; }
+
     // Blocking modes.
-    executor_impl<execution::blocking_t::never_t, Continuation, Work, ProtoAllocator>
+    executor_impl<Interface, execution::blocking_t::never_t, Continuation, Work, ProtoAllocator>
       require(execution::blocking_t::never_t) const { return {pool_, allocator_}; };
-    executor_impl<execution::blocking_t::possibly_t, Continuation, Work, ProtoAllocator>
+    executor_impl<Interface, execution::blocking_t::possibly_t, Continuation, Work, ProtoAllocator>
       require(execution::blocking_t::possibly_t) const { return {pool_, allocator_}; };
-    executor_impl<execution::blocking_t::always_t, Continuation, Work, ProtoAllocator>
+    executor_impl<Interface, execution::blocking_t::always_t, Continuation, Work, ProtoAllocator>
       require(execution::blocking_t::always_t) const { return {pool_, allocator_}; };
     static constexpr execution::blocking_t query(execution::blocking_t) { return Blocking{}; }
 
     // Continuation hint.
-    executor_impl<Blocking, execution::relationship_t::fork_t, Work, ProtoAllocator>
+    executor_impl<Interface, Blocking, execution::relationship_t::fork_t, Work, ProtoAllocator>
       require(execution::relationship_t::fork_t) const { return {pool_, allocator_}; };
-    executor_impl<Blocking, execution::relationship_t::continuation_t, Work, ProtoAllocator>
+    executor_impl<Interface, Blocking, execution::relationship_t::continuation_t, Work, ProtoAllocator>
       require(execution::relationship_t::continuation_t) const { return {pool_, allocator_}; };
     static constexpr execution::relationship_t query(execution::relationship_t) { return Continuation{}; }
 
     // Work tracking.
-    executor_impl<Blocking, Continuation, execution::outstanding_work_t::untracked_t, ProtoAllocator>
+    executor_impl<Interface, Blocking, Continuation, execution::outstanding_work_t::untracked_t, ProtoAllocator>
       require(execution::outstanding_work_t::untracked_t) const { return {pool_, allocator_}; };
-    executor_impl<Blocking, Continuation, execution::outstanding_work_t::tracked_t, ProtoAllocator>
+    executor_impl<Interface, Blocking, Continuation, execution::outstanding_work_t::tracked_t, ProtoAllocator>
       require(execution::outstanding_work_t::tracked_t) const { return {pool_, allocator_}; };
     static constexpr execution::outstanding_work_t query(execution::outstanding_work_t) { return Work{}; }
 
@@ -69,10 +75,10 @@ class static_thread_pool
     static constexpr execution::mapping_t query(execution::mapping_t) { return execution::mapping.thread; }
 
     // Allocator.
-    executor_impl<Blocking, Continuation, Work, std::allocator<void>>
+    executor_impl<Interface, Blocking, Continuation, Work, std::allocator<void>>
       require(const execution::allocator_t<void>&) const { return {pool_, std::allocator<void>{}}; };
     template<class NewProtoAllocator>
-      executor_impl<Blocking, Continuation, Work, NewProtoAllocator>
+      executor_impl<Interface, Blocking, Continuation, Work, NewProtoAllocator>
         require(const execution::allocator_t<NewProtoAllocator>& a) const { return {pool_, a.value()}; }
     ProtoAllocator query(const execution::allocator_t<ProtoAllocator>&) const noexcept { return allocator_; }
     ProtoAllocator query(const execution::allocator_t<void>&) const noexcept { return allocator_; }
@@ -89,30 +95,28 @@ class static_thread_pool
       return a.pool_ != b.pool_;
     }
 
-    template<class Function> void execute(Function f) const
+    template<class Function,
+        typename std::enable_if<
+          std::is_same<Function, Function>::value && std::is_same<Interface, execution::oneway_t>::value
+        >::type* = nullptr>
+    void execute(Function f) const
     {
       pool_->execute(Blocking{}, Continuation{}, allocator_, std::move(f));
     }
 
-    template<class Function> auto twoway_execute(Function f) const -> future<decltype(f())>
-    {
-      return pool_->twoway_execute(Blocking{}, Continuation{}, allocator_, std::move(f));
-    }
-
-    template<class Function, class SharedFactory> void bulk_execute(Function f, std::size_t n, SharedFactory sf) const
+    template<class Function, class SharedFactory,
+        typename std::enable_if<
+          std::is_same<Function, Function>::value && std::is_same<Interface, execution::bulk_oneway_t>::value
+        >::type* = nullptr>
+    void execute(Function f, std::size_t n, SharedFactory sf) const
     {
       pool_->bulk_execute(Blocking{}, Continuation{}, allocator_, std::move(f), n, std::move(sf));
-    }
-
-    template<class Function, class ResultFactory, class SharedFactory>
-    auto bulk_twoway_execute(Function f, std::size_t n, ResultFactory rf, SharedFactory sf) const -> future<decltype(rf())>
-    {
-      return pool_->bulk_twoway_execute(Blocking{}, Continuation{}, allocator_, std::move(f), n, std::move(rf), std::move(sf));
     }
   };
 
 public:
   using executor_type = executor_impl<
+      execution::oneway_t,
       execution::blocking_t::possibly_t,
       execution::relationship_t::fork_t,
       execution::outstanding_work_t::untracked_t,
@@ -326,15 +330,6 @@ private:
     future.wait();
   }
 
-  template<class Blocking, class Continuation, class ProtoAllocator, class Function>
-  auto twoway_execute(Blocking, Continuation, const ProtoAllocator& alloc, Function f) -> future<decltype(f())>
-  {
-    packaged_task<decltype(f())()> task(std::move(f));
-    future<decltype(f())> future = task.get_future();
-    this->execute(Blocking{}, Continuation{}, alloc, std::move(task));
-    return future;
-  }
-
   template<class Function, class SharedFactory>
   struct bulk_state
   {
@@ -389,97 +384,6 @@ private:
     auto wrapped_f = [f = std::move(f), p = std::move(promise)](std::size_t n, auto& s) mutable { f(n, s); };
     this->bulk_execute(execution::blocking.never, Continuation{}, alloc, std::move(wrapped_f), n, std::move(sf));
     future.wait();
-  }
-
-  template<class Blocking, class Continuation, class ProtoAllocator, class Function, class ResultFactory, class SharedFactory>
-  auto bulk_twoway_execute(Blocking, Continuation, const ProtoAllocator& alloc, Function f, std::size_t n, ResultFactory rf, SharedFactory sf)
-    -> typename std::enable_if<is_same<decltype(rf()), void>::value, future<void>>::type
-  {
-    // Wrap the shared state so that we can capture and return the result.
-    typename std::allocator_traits<ProtoAllocator>::template rebind_alloc<char> alloc2(alloc);
-    auto shared_state = std::allocate_shared<
-        std::tuple<
-          std::atomic<std::size_t>, // Number of incomplete functions.
-          decltype(sf()), // Underlying shared state.
-          std::atomic<std::size_t>, // Number of exceptions raised.
-          std::exception_ptr, // First exception raised.
-          promise<void> // Promise to receive result
-        >>(alloc2, n, sf(), 0, nullptr, promise<void>());
-    future<void> future = std::get<4>(*shared_state).get_future();
-
-    // Convert to a one way bulk operation.
-    this->bulk_execute(Blocking{}, Continuation{}, alloc,
-        [f = std::move(f)](auto i, auto& s) mutable
-        {
-          try
-          {
-            f(i, std::get<1>(*s));
-          }
-          catch (...)
-          {
-            if (std::get<2>(*s)++ == 0)
-              std::get<3>(*s) = std::current_exception();
-          }
-          if (--std::get<0>(*s) == 0)
-          {
-            if (std::get<3>(*s))
-              std::get<4>(*s).set_exception(std::get<3>(*s));
-            else
-              std::get<4>(*s).set_value();
-          }
-        }, n, [shared_state]{ return shared_state; });
-
-    return future;
-  }
-
-  template<class Blocking, class Continuation, class ProtoAllocator, class Function, class ResultFactory, class SharedFactory>
-  auto bulk_twoway_execute(Blocking, Continuation, const ProtoAllocator& alloc, Function f, std::size_t n, ResultFactory rf, SharedFactory sf)
-    -> typename std::enable_if<!is_same<decltype(rf()), void>::value, future<decltype(rf())>>::type
-  {
-    // Wrap the shared state so that we can capture and return the result.
-    typename std::allocator_traits<ProtoAllocator>::template rebind_alloc<char> alloc2(alloc);
-    auto shared_state = std::allocate_shared<
-        std::tuple<
-          std::atomic<std::size_t>, // Number of incomplete functions.
-          decltype(rf()), // Result.
-          decltype(sf()), // Underlying shared state.
-          std::atomic<std::size_t>, // Number of exceptions raised.
-          std::exception_ptr, // First exception raised.
-          promise<decltype(rf())> // Promise to receive result
-        >>(alloc2, n, rf(), sf(), 0, nullptr, promise<decltype(rf())>());
-    future<decltype(rf())> future = std::get<5>(*shared_state).get_future();
-
-    // Convert to a one way bulk operation.
-    this->bulk_execute(Blocking{}, Continuation{}, alloc,
-        [f = std::move(f)](auto i, auto& s) mutable
-        {
-          try
-          {
-            f(i, std::get<1>(*s), std::get<2>(*s));
-          }
-          catch (...)
-          {
-            if (std::get<3>(*s)++ == 0)
-              std::get<4>(*s) = std::current_exception();
-          }
-          if (--std::get<0>(*s) == 0)
-          {
-            if (std::get<4>(*s))
-              std::get<5>(*s).set_exception(std::get<4>(*s));
-            else
-              std::get<5>(*s).set_value(std::move(std::get<1>(*s)));
-          }
-        }, n, [shared_state]{ return shared_state; });
-
-    return future;
-  }
-
-  template<class Blocking, class Continuation, class ProtoAllocator, class Function, class ResultFactory, class SharedFactory>
-  auto bulk_twoway_execute(execution::blocking_t::always_t, Continuation, const ProtoAllocator& alloc, Function f, std::size_t n, ResultFactory rf, SharedFactory sf)
-  {
-    auto future = this->bulk_twoway_execute(execution::blocking.never, Continuation{}, alloc, std::move(f), n, std::move(rf), std::move(sf));
-    future.wait();
-    return future;
   }
 
   void work_up(execution::outstanding_work_t::tracked_t) noexcept

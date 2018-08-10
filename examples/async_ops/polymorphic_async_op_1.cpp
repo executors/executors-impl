@@ -9,12 +9,10 @@ using std::experimental::static_thread_pool;
 
 using task_executor = execution::executor<
         execution::oneway_t,
-        execution::single_t,
         execution::blocking_t::never_t>;
 
 using completion_executor = execution::executor<
         execution::oneway_t,
-        execution::single_t,
         execution::blocking_t::never_t,
         execution::prefer_only<execution::blocking_t::possibly_t>,
         execution::prefer_only<execution::outstanding_work_t::tracked_t>>;

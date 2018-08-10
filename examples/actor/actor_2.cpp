@@ -103,7 +103,6 @@ public:
 protected:
   using executor_type = std::experimental::execution::executor<
       std::experimental::execution::oneway_t,
-      std::experimental::execution::single_t,
       std::experimental::execution::blocking_t::never_t,
       std::experimental::execution::prefer_only<std::experimental::execution::relationship_t::continuation_t>>;
 

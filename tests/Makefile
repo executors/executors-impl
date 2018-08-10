@@ -1,6 +1,5 @@
 EXAMPLES = \
   executor \
-  future \
   static_thread_pool
 
 CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../include -g

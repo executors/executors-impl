@@ -43,13 +43,9 @@ template<class Executor, class Property>
 // Associated execution context.
 struct context_t;
 
-// Directionality.
+// Interface properties.
 struct oneway_t;
-struct twoway_t;
-
-// Cardinality.
-struct single_t;
-struct bulk_t;
+struct bulk_oneway_t;
 
 // Blocking behaviour.
 struct blocking_t;
@@ -74,19 +70,10 @@ template<class ProtoAllocator> struct allocator_t;
 
 // Type traits to determine conformance to executor type requirements.
 template<class Executor> struct is_oneway_executor;
-template<class Executor> struct is_twoway_executor;
 template<class Executor> struct is_bulk_oneway_executor;
-template<class Executor> struct is_bulk_twoway_executor;
 
 template<class Executor> constexpr bool is_oneway_executor_v = is_oneway_executor<Executor>::value;
-template<class Executor> constexpr bool is_twoway_executor_v = is_twoway_executor<Executor>::value;
 template<class Executor> constexpr bool is_bulk_oneway_executor_v = is_bulk_oneway_executor<Executor>::value;
-template<class Executor> constexpr bool is_bulk_twoway_executor_v = is_bulk_twoway_executor<Executor>::value;
-
-// Type trait to obtain a two way executor's future type.
-template<class Executor, class T> struct executor_future;
-
-template<class Executor, class T> using executor_future_t = typename executor_future<Executor, T>::type;
 
 // Type traits to obtain a bulk executor's shape and index types.
 template<class Executor> struct executor_shape;
@@ -97,7 +84,8 @@ template<class Executor> using executor_index_t = typename executor_index<Execut
 
 // Polymorphic wrappers.
 class bad_executor;
-template<class... SupportableProperties> class executor;
+template<class InterfaceProperty, class... SupportableProperties>
+  using executor = typename InterfaceProperty::template polymorphic_executor_type<InterfaceProperty, SupportableProperties...>;
 template<class InnerProperty> struct prefer_only;
 
 } // namespace execution
@@ -109,12 +97,10 @@ template<class InnerProperty> struct prefer_only;
 #include <experimental/bits/can_prefer.h>
 #include <experimental/bits/can_query.h>
 #include <experimental/bits/is_oneway_executor.h>
-#include <experimental/bits/is_twoway_executor.h>
 #include <experimental/bits/is_bulk_oneway_executor.h>
-#include <experimental/bits/is_bulk_twoway_executor.h>
 #include <experimental/bits/context.h>
-#include <experimental/bits/directionality.h>
-#include <experimental/bits/cardinality.h>
+#include <experimental/bits/oneway.h>
+#include <experimental/bits/bulk_oneway.h>
 #include <experimental/bits/blocking.h>
 #include <experimental/bits/blocking_adaptation.h>
 #include <experimental/bits/relationship.h>
@@ -122,10 +108,10 @@ template<class InnerProperty> struct prefer_only;
 #include <experimental/bits/bulk_guarantee.h>
 #include <experimental/bits/mapping.h>
 #include <experimental/bits/allocator.h>
-#include <experimental/bits/executor_future.h>
 #include <experimental/bits/executor_shape.h>
 #include <experimental/bits/executor_index.h>
-#include <experimental/bits/executor.h>
+#include <experimental/bits/oneway_executor.h>
+#include <experimental/bits/bulk_oneway_executor.h>
 #include <experimental/bits/prefer_only.h>
 
 #endif // STD_EXPERIMENTAL_EXECUTION
