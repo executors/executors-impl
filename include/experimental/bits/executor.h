@@ -416,7 +416,8 @@ public:
 
   template<class Executor> executor(Executor e,
       typename std::enable_if<executor_impl::is_valid_target_v<
-        Executor, SupportableProperties...>>::type* = 0)
+        typename std::enable_if<!std::is_same<Executor, executor>::value, Executor>::type,
+          SupportableProperties...>>::type* = 0)
   {
     auto e2 = execution::require(std::move(e),
         executor_impl::conditional_property_t<single_t, SupportableProperties...>{},
