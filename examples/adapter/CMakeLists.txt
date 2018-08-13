@@ -1,0 +1,2 @@
+executors_add_example(logging)
+executors_add_example(strand)

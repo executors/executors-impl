@@ -1,0 +1,2 @@
+executors_add_example(bulk_twoway_reduce)
+executors_add_example(bulk_twoway_reduce_vector)
