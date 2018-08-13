@@ -1,0 +1,3 @@
+executors_add_example(invoke_1)
+executors_add_example(invoke_2)
+executors_add_example(invoke_3)

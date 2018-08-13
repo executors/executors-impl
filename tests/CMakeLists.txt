@@ -1,0 +1,5 @@
+add_executable(executor executor.cpp)
+target_link_libraries(executor executors)
+
+add_executable(static_thread_pool static_thread_pool.cpp)
+target_link_libraries(static_thread_pool executors)

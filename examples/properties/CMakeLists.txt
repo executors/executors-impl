@@ -1,0 +1,5 @@
+executors_add_example(adapted_and_preferable)
+executors_add_example(adapted_and_not_preferable)
+executors_add_example(not_adapted_and_preferable)
+executors_add_example(not_adapted_and_not_preferable)
+executors_add_example(priority)
