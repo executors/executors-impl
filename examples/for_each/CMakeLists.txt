@@ -1,0 +1,3 @@
+executors_add_example(for_each_1)
+executors_add_example(for_each_2)
+executors_add_example(for_each_3)
