@@ -137,7 +137,7 @@ struct impl_base
   virtual ~impl_base() {}
   virtual impl_base* clone() const noexcept = 0;
   virtual void destroy() noexcept = 0;
-  virtual void execute(std::unique_ptr<bulk_func_base> f, std::size_t n, std::shared_ptr<shared_factory_base> sf) = 0;
+  virtual void bulk_execute(std::unique_ptr<bulk_func_base> f, std::size_t n, std::shared_ptr<shared_factory_base> sf) = 0;
   virtual const type_info& target_type() const = 0;
   virtual void* target() = 0;
   virtual const void* target() const = 0;
@@ -169,9 +169,9 @@ struct impl : impl_base
       delete this;
   }
 
-  virtual void execute(std::unique_ptr<bulk_func_base> f, std::size_t n, std::shared_ptr<shared_factory_base> sf)
+  virtual void bulk_execute(std::unique_ptr<bulk_func_base> f, std::size_t n, std::shared_ptr<shared_factory_base> sf)
   {
-    executor_.execute(
+    executor_.bulk_execute(
         [f = std::move(f)](std::size_t i, auto s) mutable { f->call(i, s); }, n,
         [sf = std::move(sf)]() mutable { return sf->call(); });
   }
@@ -480,7 +480,7 @@ public:
   }
 
   template<class Function, class SharedFactory>
-  void execute(Function f, std::size_t n, SharedFactory sf) const
+  void bulk_execute(Function f, std::size_t n, SharedFactory sf) const
   {
     auto f_wrap = [f = std::move(f)](std::size_t i, std::shared_ptr<void>& ss) mutable
     {
@@ -494,7 +494,7 @@ public:
 
     std::unique_ptr<bulk_oneway_executor_impl::bulk_func_base> fp(new bulk_oneway_executor_impl::bulk_func<decltype(f_wrap)>(std::move(f_wrap)));
     std::shared_ptr<bulk_oneway_executor_impl::shared_factory_base> sfp(new bulk_oneway_executor_impl::shared_factory<decltype(sf_wrap)>(std::move(sf_wrap)));
-    impl_ ? impl_->execute(std::move(fp), n, std::move(sfp)) : throw bad_executor();
+    impl_ ? impl_->bulk_execute(std::move(fp), n, std::move(sfp)) : throw bad_executor();
   }
 
   // polymorphic executor capacity:

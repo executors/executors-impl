@@ -108,7 +108,7 @@ class static_thread_pool
         typename std::enable_if<
           std::is_same<Function, Function>::value && std::is_same<Interface, execution::bulk_oneway_t>::value
         >::type* = nullptr>
-    void execute(Function f, std::size_t n, SharedFactory sf) const
+    void bulk_execute(Function f, std::size_t n, SharedFactory sf) const
     {
       pool_->bulk_execute(Blocking{}, Continuation{}, allocator_, std::move(f), n, std::move(sf));
     }

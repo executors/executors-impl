@@ -41,7 +41,7 @@ private:
     }
 
     template<class Function, class SharedFactory>
-    void execute(Function f, std::size_t n, SharedFactory sf) const
+    void bulk_execute(Function f, std::size_t n, SharedFactory sf) const
     {
       auto shared_state = std::make_shared<decltype(sf())>(sf());
       for (std::size_t i = 0; i < n; ++i)

@@ -89,7 +89,7 @@ void static_thread_pool_bulk_oneway_executor_compile_test(Executor ex1)
 
   const Executor& cex1 = ex1;
 
-  cex1.execute([](std::size_t, int&){}, 1, []{ return 42; });
+  cex1.bulk_execute([](std::size_t, int&){}, 1, []{ return 42; });
 
   static_thread_pool_bulk_oneway_executor_compile_test(execution::require(cex1, execution::blocking.never));
   static_thread_pool_bulk_oneway_executor_compile_test(execution::require(cex1, execution::blocking.possibly));
