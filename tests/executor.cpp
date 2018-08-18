@@ -3,6 +3,8 @@
 
 namespace execution = std::experimental::execution;
 using std::experimental::static_thread_pool;
+using std::experimental::promise;
+using std::experimental::future;
 
 using oneway_executor = execution::executor<
     execution::oneway_t,
@@ -20,6 +22,12 @@ using bulk_oneway_executor = execution::executor<
     execution::blocking_t::never_t,
     execution::blocking_t::possibly_t,
     execution::blocking_t::always_t
+  >;
+
+using then_executor = execution::executor<
+    execution::then_t,
+    execution::oneway_t,
+    execution::blocking_t::possibly_t
   >;
 
 void oneway_executor_compile_test()
@@ -193,6 +201,164 @@ void bulk_oneway_executor_compile_test()
   (void)ex9;
 
   const static_thread_pool::executor_type* cex6 = ex1.target<static_thread_pool::executor_type>();
+  (void)cex6;
+
+  bool b2 = (cex1 == cex2);
+  (void)b2;
+
+  bool b3 = (cex1 != cex2);
+  (void)b3;
+
+  bool b4 = (cex1 == nullptr);
+  (void)b4;
+
+  bool b5 = (cex1 != nullptr);
+  (void)b5;
+
+  bool b6 = (nullptr == cex2);
+  (void)b6;
+
+  bool b7 = (nullptr != cex2);
+  (void)b7;
+
+  swap(ex1, ex2);
+}
+
+template <class Interface>
+class inline_executor
+{
+public:
+  friend bool operator==(const inline_executor&, const inline_executor&) noexcept
+  {
+    return true;
+  }
+
+  friend bool operator!=(const inline_executor&, const inline_executor&) noexcept
+  {
+    return false;
+  }
+
+  inline_executor<execution::oneway_t> require(execution::oneway_t) const noexcept
+  {
+    return {};
+  }
+
+  inline_executor<execution::then_t> require(execution::then_t) const noexcept
+  {
+    return {};
+  }
+
+  template <class Function>
+  auto execute(Function f) const noexcept
+    -> std::enable_if_t<
+      std::is_same_v<Function, Function> && std::is_same_v<Interface, execution::oneway_t>,
+      void>
+  {
+    f();
+  }
+
+  template <class Function, class Future>
+  auto then_execute(Function f, Future fut) const
+    -> std::enable_if_t<
+      std::is_same_v<Function, Function> && std::is_same_v<Interface, execution::then_t>,
+      std::experimental::future<decltype(f(std::move(fut)))>>
+  {
+    return fut.then(std::move(f));
+  }
+};
+
+void then_executor_compile_test()
+{
+  static_assert(execution::is_then_executor_v<then_executor>, "is_then_executor must evaluate true");
+
+  inline_executor<execution::then_t> inline_ex;
+
+  static_assert(noexcept(then_executor()), "default constructor must not throw");
+  static_assert(noexcept(then_executor(nullptr)), "nullptr constructor must not throw");
+
+  then_executor ex1;
+  then_executor ex2(nullptr);
+
+  const then_executor& cex1 = ex1;
+  const then_executor& cex2 = ex2;
+
+  static_assert(noexcept(then_executor(cex1)), "copy constructor must not throw");
+  static_assert(noexcept(then_executor(std::move(ex1))), "move constructor must not throw");
+
+  then_executor ex3(ex1);
+  then_executor ex4(std::move(ex1));
+
+  then_executor ex5(inline_ex);
+
+  execution::executor<execution::oneway_t> ex6(ex5);
+  execution::executor<execution::oneway_t, execution::then_t> ex7(ex5);
+
+  static_assert(noexcept(ex2 = cex1), "copy assignment must not throw");
+  static_assert(noexcept(ex3 = std::move(ex1)), "move assignment must not throw");
+  static_assert(noexcept(ex3 = nullptr), "nullptr assignment must not throw");
+
+  ex2 = ex1;
+  ex3 = std::move(ex1);
+  ex4 = nullptr;
+  ex5 = inline_ex;
+
+  static_assert(noexcept(ex1.swap(ex2)), "swap must not throw");
+
+  ex1.swap(ex2);
+
+  ex1.assign(inline_ex);
+
+  execution::executor<execution::oneway_t> ex8 = execution::require(cex1, execution::oneway);
+
+  ex1 = execution::require(cex1, execution::then);
+  ex1 = execution::require(cex1, execution::mapping.thread);
+  //ex1 = execution::require(cex1, execution::blocking.never);
+  ex1 = execution::require(cex1, execution::blocking.possibly);
+  //ex1 = execution::require(cex1, execution::blocking.always);
+
+  ex1 = execution::prefer(cex1, execution::mapping.thread);
+  ex1 = execution::prefer(cex1, execution::blocking.never);
+  ex1 = execution::prefer(cex1, execution::blocking.possibly);
+  ex1 = execution::prefer(cex1, execution::blocking.always);
+  ex1 = execution::prefer(cex1, execution::relationship.fork);
+  ex1 = execution::prefer(cex1, execution::relationship.continuation);
+  ex1 = execution::prefer(cex1, execution::outstanding_work.untracked);
+  ex1 = execution::prefer(cex1, execution::outstanding_work.tracked);
+  ex1 = execution::prefer(cex1, execution::bulk_guarantee.sequenced);
+  ex1 = execution::prefer(cex1, execution::bulk_guarantee.parallel);
+  ex1 = execution::prefer(cex1, execution::bulk_guarantee.unsequenced);
+  ex1 = execution::prefer(cex1, execution::mapping.new_thread);
+
+  promise<int> p1;
+  future<int> f1 = p1.get_future();
+  future<int> t1 = ex1.then_execute([](future<int>){ return 0; }, std::move(f1));
+  (void)t1;
+
+  promise<int> p2;
+  future<int> f2 = p2.get_future();
+  future<void> t2 = ex1.then_execute([](future<int>){}, std::move(f2));
+  (void)t2;
+
+  promise<void> p3;
+  future<void> f3 = p3.get_future();
+  future<int> t3 = ex1.then_execute([](future<void>){ return 0; }, std::move(f3));
+  (void)t3;
+
+  promise<void> p4;
+  future<void> f4 = p4.get_future();
+  future<void> t4 = ex1.then_execute([](future<void>) {}, std::move(f4));
+  (void)t4;
+
+  bool b1 = static_cast<bool>(ex1);
+  (void)b1;
+
+  const std::type_info& target_type = cex1.target_type();
+  (void)target_type;
+
+  inline_executor<execution::then_t>* ex9 = ex1.target<inline_executor<execution::then_t>>();
+  (void)ex9;
+
+  const inline_executor<execution::then_t>* cex6 = ex1.target<inline_executor<execution::then_t>>();
   (void)cex6;
 
   bool b2 = (cex1 == cex2);

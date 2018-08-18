@@ -324,8 +324,8 @@ private:
     }
 
     // Otherwise, wrap the function with a promise that, when broken, will signal that the function is complete.
-    promise<void> promise;
-    future<void> future = promise.get_future();
+    std::promise<void> promise;
+    std::future<void> future = promise.get_future();
     this->execute(execution::blocking.never, Continuation{}, alloc, [f = std::move(f), p = std::move(promise)]() mutable { f(); });
     future.wait();
   }
@@ -379,8 +379,8 @@ private:
   void bulk_execute(execution::blocking_t::always_t, Continuation, const ProtoAllocator& alloc, Function f, std::size_t n, SharedFactory sf)
   {
     // Wrap the function with a promise that, when broken, will signal that the function is complete.
-    promise<void> promise;
-    future<void> future = promise.get_future();
+    std::promise<void> promise;
+    std::future<void> future = promise.get_future();
     auto wrapped_f = [f = std::move(f), p = std::move(promise)](std::size_t n, auto& s) mutable { f(n, s); };
     this->bulk_execute(execution::blocking.never, Continuation{}, alloc, std::move(wrapped_f), n, std::move(sf));
     future.wait();

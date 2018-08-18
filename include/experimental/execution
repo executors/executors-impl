@@ -46,6 +46,7 @@ struct context_t;
 // Interface properties.
 struct oneway_t;
 struct bulk_oneway_t;
+struct then_t;
 
 // Blocking behaviour.
 struct blocking_t;
@@ -71,9 +72,11 @@ template<class ProtoAllocator> struct allocator_t;
 // Type traits to determine conformance to executor type requirements.
 template<class Executor> struct is_oneway_executor;
 template<class Executor> struct is_bulk_oneway_executor;
+template<class Executor> struct is_then_executor;
 
 template<class Executor> constexpr bool is_oneway_executor_v = is_oneway_executor<Executor>::value;
 template<class Executor> constexpr bool is_bulk_oneway_executor_v = is_bulk_oneway_executor<Executor>::value;
+template<class Executor> constexpr bool is_then_executor_v = is_then_executor<Executor>::value;
 
 // Type traits to obtain a bulk executor's shape and index types.
 template<class Executor> struct executor_shape;
@@ -98,9 +101,11 @@ template<class InnerProperty> struct prefer_only;
 #include <experimental/bits/can_query.h>
 #include <experimental/bits/is_oneway_executor.h>
 #include <experimental/bits/is_bulk_oneway_executor.h>
+#include <experimental/bits/is_then_executor.h>
 #include <experimental/bits/context.h>
 #include <experimental/bits/oneway.h>
 #include <experimental/bits/bulk_oneway.h>
+#include <experimental/bits/then.h>
 #include <experimental/bits/blocking.h>
 #include <experimental/bits/blocking_adaptation.h>
 #include <experimental/bits/relationship.h>
@@ -112,6 +117,7 @@ template<class InnerProperty> struct prefer_only;
 #include <experimental/bits/executor_index.h>
 #include <experimental/bits/oneway_executor.h>
 #include <experimental/bits/bulk_oneway_executor.h>
+#include <experimental/bits/then_executor.h>
 #include <experimental/bits/prefer_only.h>
 
 #endif // STD_EXPERIMENTAL_EXECUTION

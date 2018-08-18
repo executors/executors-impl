@@ -5,6 +5,8 @@
 #include <future>
 #include <functional>
 #include <memory>
+#include <experimental/bits/blocking.h>
+#include <experimental/bits/oneway.h>
 
 namespace std {
 namespace experimental {
@@ -58,8 +60,6 @@ public:
   friend bool operator==(const default_executor&, const default_executor&) noexcept { return true; }
   friend bool operator!=(const default_executor&, const default_executor&) noexcept { return false; }
   template<class Function> void execute(Function f) const noexcept { f(); }
-  constexpr bool query(execution::oneway_t) { return true; }
-  constexpr bool query(execution::single_t) { return true; }
 };
 
 } // namespace future_impl
@@ -203,7 +203,7 @@ auto future<R>::then(Executor ex, Function f)
 
   future_impl::continuation_ptr continuation(continuation_);
   future_impl::attach(continuation,
-      [ex = execution::require(std::move(ex), execution::oneway), prom = std::move(prom),
+      [ex = execution::require(std::move(ex), execution::oneway_t{}), prom = std::move(prom),
         pred = std::move(*this), f = std::move(f)](bool nested_inside_then) mutable
       {
         auto func = [prom = std::move(prom), pred = std::move(pred), f = std::move(f)]() mutable
@@ -230,6 +230,8 @@ auto future<R>::then(Executor ex, Function f)
 
   return future_impl::unwrap(std::move(fut));
 }
+
+template<class> class packaged_task;
 
 template<class R, class... Args>
 class packaged_task<R(Args...)>

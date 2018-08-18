@@ -37,8 +37,8 @@ private:
     template<class Function> auto execute(Function f) const
       -> decltype(inner_declval<Function>().execute(std::move(f)))
     {
-      promise<void> promise;
-      future<void> future = promise.get_future();
+      std::promise<void> promise;
+      std::future<void> future = promise.get_future();
       this->executor_.execute([f = std::move(f), p = std::move(promise)]() mutable { f(); });
       future.wait();
     }
@@ -56,8 +56,8 @@ private:
     auto bulk_execute(Function f, std::size_t n, SharedFactory sf) const
       -> decltype(inner_declval<Function>().bulk_execute(std::move(f), n, std::move(sf)))
     {
-      promise<void> promise;
-      future<void> future = promise.get_future();
+      std::promise<void> promise;
+      std::future<void> future = promise.get_future();
       this->executor_.bulk_execute([f = std::move(f), p = std::move(promise)](auto i, auto& s) mutable { f(i, s); }, n, std::move(sf));
       future.wait();
     }
