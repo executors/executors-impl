@@ -6,7 +6,7 @@
 #include <functional>
 #include <memory>
 #include <experimental/bits/blocking.h>
-#include <experimental/bits/oneway.h>
+#include <experimental/bits/trivial.h>
 
 namespace std {
 namespace experimental {
@@ -203,7 +203,7 @@ auto future<R>::then(Executor ex, Function f)
 
   future_impl::continuation_ptr continuation(continuation_);
   future_impl::attach(continuation,
-      [ex = execution::require(std::move(ex), execution::oneway_t{}), prom = std::move(prom),
+      [ex = execution::require(std::move(ex), execution::trivial_t{}), prom = std::move(prom),
         pred = std::move(*this), f = std::move(f)](bool nested_inside_then) mutable
       {
         auto func = [prom = std::move(prom), pred = std::move(pred), f = std::move(f)]() mutable

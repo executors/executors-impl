@@ -1,5 +1,5 @@
-#ifndef STD_EXPERIMENTAL_BITS_IS_ONEWAY_EXECUTOR_H
-#define STD_EXPERIMENTAL_BITS_IS_ONEWAY_EXECUTOR_H
+#ifndef STD_EXPERIMENTAL_BITS_IS_TRIVIAL_EXECUTOR_H
+#define STD_EXPERIMENTAL_BITS_IS_TRIVIAL_EXECUTOR_H
 
 #include <experimental/bits/is_executor.h>
 
@@ -7,7 +7,7 @@ namespace std {
 namespace experimental {
 inline namespace executors_v1 {
 namespace execution {
-namespace is_oneway_executor_impl {
+namespace is_trivial_executor_impl {
 
 struct nullary_function
 {
@@ -26,14 +26,14 @@ struct eval<T,
     typename std::enable_if<std::is_same<void, decltype(std::declval<const T&>().execute(std::declval<nullary_function&&>()))>::value>::type
 	>> : is_executor_impl::eval<T> {};
 
-} // namespace is_oneway_executor_impl
+} // namespace is_trivial_executor_impl
 
 template<class Executor>
-struct is_oneway_executor : is_oneway_executor_impl::eval<Executor> {};
+struct is_trivial_executor : is_trivial_executor_impl::eval<Executor> {};
 
 } // namespace execution
 } // inline namespace executors_v1
 } // namespace experimental
 } // namespace std
 
-#endif // STD_EXPERIMENTAL_BITS_IS_ONEWAY_EXECUTOR_H
+#endif // STD_EXPERIMENTAL_BITS_IS_TRIVIAL_EXECUTOR_H

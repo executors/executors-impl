@@ -1,5 +1,5 @@
-#ifndef STD_EXPERIMENTAL_BITS_BULK_BULK_ONEWAY_EXECUTOR_H
-#define STD_EXPERIMENTAL_BITS_BULK_BULK_ONEWAY_EXECUTOR_H
+#ifndef STD_EXPERIMENTAL_BITS_TRIVIAL_EXECUTOR_H
+#define STD_EXPERIMENTAL_BITS_TRIVIAL_EXECUTOR_H
 
 #include <atomic>
 #include <cassert>
@@ -12,7 +12,7 @@ namespace std {
 namespace experimental {
 inline namespace executors_v1 {
 namespace execution {
-namespace bulk_oneway_executor_impl {
+namespace trivial_executor_impl {
 
 template<class... SupportableProperties>
 struct property_list;
@@ -107,37 +107,37 @@ using conditional_property_t = typename conditional<
     Property, identity_property>::type;
 
 template<class R, class... Args>
-struct multi_use_func_base
+struct single_use_func_base
 {
-  virtual ~multi_use_func_base() {}
+  virtual ~single_use_func_base() {}
   virtual R call(Args...) = 0;
 };
 
 template<class Function, class R, class... Args>
-struct multi_use_func : multi_use_func_base<R, Args...>
+struct single_use_func : single_use_func_base<R, Args...>
 {
   Function function_;
 
-  explicit multi_use_func(Function f) : function_(std::move(f)) {}
+  explicit single_use_func(Function f) : function_(std::move(f)) {}
 
   virtual R call(Args... args)
   {
-    return function_(std::forward<Args>(args)...);
+    std::unique_ptr<single_use_func> fp(this);
+    Function f(std::move(function_));
+    fp.reset();
+    return f(std::forward<Args>(args)...);
   }
 };
 
-using shared_factory_base = multi_use_func_base<std::shared_ptr<void>>;
-template<class SharedFactory> using shared_factory = multi_use_func<SharedFactory, std::shared_ptr<void>>;
-
-using bulk_func_base = multi_use_func_base<void, std::size_t, std::shared_ptr<void>&>;
-template<class Function> using bulk_func = multi_use_func<Function, void, std::size_t, std::shared_ptr<void>&>;
+using trivial_func_base = single_use_func_base<void>;
+template<class Function> using trivial_func = single_use_func<Function, void>;
 
 struct impl_base
 {
   virtual ~impl_base() {}
   virtual impl_base* clone() const noexcept = 0;
   virtual void destroy() noexcept = 0;
-  virtual void bulk_execute(std::unique_ptr<bulk_func_base> f, std::size_t n, std::shared_ptr<shared_factory_base> sf) = 0;
+  virtual void execute(std::unique_ptr<trivial_func_base> f) = 0;
   virtual const type_info& target_type() const = 0;
   virtual void* target() = 0;
   virtual const void* target() const = 0;
@@ -169,11 +169,9 @@ struct impl : impl_base
       delete this;
   }
 
-  virtual void bulk_execute(std::unique_ptr<bulk_func_base> f, std::size_t n, std::shared_ptr<shared_factory_base> sf)
+  virtual void execute(std::unique_ptr<trivial_func_base> f)
   {
-    executor_.bulk_execute(
-        [f = std::move(f)](std::size_t i, auto s) mutable { f->call(i, s); }, n,
-        [sf = std::move(sf)]() mutable { return sf->call(); });
+    executor_.execute([f = std::move(f)]() mutable { f.release()->call(); });
   }
 
   virtual const type_info& target_type() const
@@ -315,10 +313,10 @@ struct impl : impl_base
   }
 };
 
-} // namespace bulk_oneway_executor_impl
+} // namespace trivial_executor_impl
 
 template<class... SupportableProperties>
-class bulk_oneway_t::polymorphic_executor_type
+class trivial_t::polymorphic_executor_type
 {
 public:
   // construct / copy / destroy:
@@ -345,18 +343,18 @@ public:
   }
 
   template<class Executor> polymorphic_executor_type(Executor e,
-      typename std::enable_if<bulk_oneway_executor_impl::is_valid_target_v<
+      typename std::enable_if<trivial_executor_impl::is_valid_target_v<
         typename std::enable_if<!std::is_same<Executor, polymorphic_executor_type>::value, Executor>::type,
           SupportableProperties...>>::type* = 0)
   {
-    auto e2 = execution::require(std::move(e), bulk_oneway);
-    impl_ = new bulk_oneway_executor_impl::impl<decltype(e2), SupportableProperties...>(std::move(e2));
+    auto e2 = execution::require(std::move(e), trivial);
+    impl_ = new trivial_executor_impl::impl<decltype(e2), SupportableProperties...>(std::move(e2));
   }
 
   template<class... OtherSupportableProperties>
   polymorphic_executor_type(polymorphic_executor_type<OtherSupportableProperties...> e,
-      typename std::enable_if<bulk_oneway_executor_impl::contains_exact_property_list_v<
-        bulk_oneway_executor_impl::property_list<SupportableProperties...>,
+      typename std::enable_if<trivial_executor_impl::contains_exact_property_list_v<
+        trivial_executor_impl::property_list<SupportableProperties...>,
           OtherSupportableProperties...>>::type* = 0)
     : impl_(e.impl_ ? e.impl_->clone() : nullptr)
   {
@@ -364,8 +362,8 @@ public:
 
   template<class... OtherSupportableProperties>
   polymorphic_executor_type(polymorphic_executor_type<OtherSupportableProperties...> e,
-      typename std::enable_if<!bulk_oneway_executor_impl::contains_exact_property_list_v<
-        bulk_oneway_executor_impl::property_list<SupportableProperties...>,
+      typename std::enable_if<!trivial_executor_impl::contains_exact_property_list_v<
+        trivial_executor_impl::property_list<SupportableProperties...>,
           OtherSupportableProperties...>>::type* = 0) = delete;
 
   polymorphic_executor_type& operator=(const polymorphic_executor_type& e) noexcept
@@ -419,11 +417,11 @@ public:
 
   template<class Property,
     class = typename std::enable_if<
-      bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         && is_interface_property<Property>::value>::type>
   typename Property::template polymorphic_executor_type<SupportableProperties...> require(const Property& p) const
   {
-    bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     if (!impl_) throw bad_executor();
     return std::unique_ptr<typename Property::template polymorphic_executor_type<>>(
         static_cast<typename Property::template polymorphic_executor_type<>*>(
@@ -432,31 +430,31 @@ public:
 
   template<class Property,
     class = typename std::enable_if<
-      bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         && !is_interface_property<Property>::value>::type>
   polymorphic_executor_type require(const Property& p) const
   {
-    bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     return impl_ ? impl_->require(typeid(p1), &p1) : throw bad_executor();
   }
 
   template<class Property,
     class = typename std::enable_if<
-      bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable>::type>
+      trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable>::type>
   friend polymorphic_executor_type prefer(const polymorphic_executor_type& e, const Property& p)
   {
-    bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     return e.get_impl() ? e.get_impl()->prefer(typeid(p1), &p1) : throw bad_executor();
   }
 
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
-        || bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
-      typename bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
+      trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+        || trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
+      typename trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
-    bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     using result_type = typename decltype(p1)::polymorphic_query_result_type;
     using tuple_type = std::tuple<result_type>;
     if (!impl_) throw bad_executor();
@@ -467,11 +465,11 @@ public:
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      !bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
-        && !bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
-      typename bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
+      !trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+        && !trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
+      typename trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
-    bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    trivial_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     using result_type = typename decltype(p1)::polymorphic_query_result_type;
     using tuple_type = std::tuple<result_type>;
     if (!impl_) throw bad_executor();
@@ -479,22 +477,11 @@ public:
     return std::get<0>(*result);
   }
 
-  template<class Function, class SharedFactory>
-  void bulk_execute(Function f, std::size_t n, SharedFactory sf) const
+  template<class Function>
+  void execute(Function f) const
   {
-    auto f_wrap = [f = std::move(f)](std::size_t i, std::shared_ptr<void>& ss) mutable
-    {
-      f(i, *std::static_pointer_cast<decltype(sf())>(ss));
-    };
-
-    auto sf_wrap = [sf = std::move(sf)]() mutable
-    {
-      return std::make_shared<decltype(sf())>(sf());
-    };
-
-    std::unique_ptr<bulk_oneway_executor_impl::bulk_func_base> fp(new bulk_oneway_executor_impl::bulk_func<decltype(f_wrap)>(std::move(f_wrap)));
-    std::shared_ptr<bulk_oneway_executor_impl::shared_factory_base> sfp(new bulk_oneway_executor_impl::shared_factory<decltype(sf_wrap)>(std::move(sf_wrap)));
-    impl_ ? impl_->bulk_execute(std::move(fp), n, std::move(sfp)) : throw bad_executor();
+    std::unique_ptr<trivial_executor_impl::trivial_func_base> fp(new trivial_executor_impl::trivial_func<Function>(std::move(f)));
+    impl_ ? impl_->execute(std::move(fp)) : throw bad_executor();
   }
 
   // polymorphic executor capacity:
@@ -571,10 +558,10 @@ public:
   }
 
 private:
-  template<class...> friend class bulk_oneway_t::polymorphic_executor_type;
-  polymorphic_executor_type(bulk_oneway_executor_impl::impl_base* i) noexcept : impl_(i) {}
-  bulk_oneway_executor_impl::impl_base* impl_;
-  const bulk_oneway_executor_impl::impl_base* get_impl() const { return impl_; }
+  template<class...> friend class trivial_t::polymorphic_executor_type;
+  polymorphic_executor_type(trivial_executor_impl::impl_base* i) noexcept : impl_(i) {}
+  trivial_executor_impl::impl_base* impl_;
+  const trivial_executor_impl::impl_base* get_impl() const { return impl_; }
 };
 
 } // namespace execution
@@ -582,4 +569,4 @@ private:
 } // namespace experimental
 } // namespace std
 
-#endif // STD_EXPERIMENTAL_BITS_BULK_BULK_ONEWAY_EXECUTOR_H
+#endif // STD_EXPERIMENTAL_BITS_TRIVIAL_EXECUTOR_H

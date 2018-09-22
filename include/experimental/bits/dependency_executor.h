@@ -1,18 +1,21 @@
-#ifndef STD_EXPERIMENTAL_BITS_ONEWAY_EXECUTOR_H
-#define STD_EXPERIMENTAL_BITS_ONEWAY_EXECUTOR_H
+#ifndef STD_EXPERIMENTAL_BITS_DEPENDENCY_EXECUTOR_H
+#define STD_EXPERIMENTAL_BITS_DEPENDENCY_EXECUTOR_H
 
 #include <atomic>
 #include <cassert>
 #include <experimental/bits/bad_executor.h>
 #include <experimental/bits/is_interface_property.h>
+#include <experimental/future>
 #include <memory>
 #include <utility>
+
+#if 0
 
 namespace std {
 namespace experimental {
 inline namespace executors_v1 {
 namespace execution {
-namespace oneway_executor_impl {
+namespace dependency_executor_impl {
 
 template<class... SupportableProperties>
 struct property_list;
@@ -106,6 +109,38 @@ using conditional_property_t = typename conditional<
   contains_exact_property_v<Property, SupportableProperties...>,
     Property, identity_property>::type;
 
+#if 0
+struct dependency_func_base
+{
+  virtual ~dependency_func_base() {}
+  virtual any_ptr call(future<any_ptr>) = 0;
+};
+
+template<class Function, class R, class Arg>
+struct dependency_func : dependency_func_base
+{
+  Function function_;
+
+  explicit dependency_func(Function f) : function_(std::move(f)) {}
+
+  virtual any_ptr call(future<any_ptr> value)
+  {
+    std::unique_ptr<dependency_func> fp(this);
+    Function f(std::move(function_));
+    fp.reset();
+    if constexpr (std::is_same<R, void>::value)
+    {
+      f(std::move(*static_pointer_cast<Arg>(std::move(value))));
+      return any_ptr();
+    }
+    else
+    {
+      return any_ptr(new R(f(std::move(*static_pointer_cast<Arg>(std::move(value))))));
+    }
+  }
+};
+#endif
+
 template<class R, class... Args>
 struct single_use_func_base
 {
@@ -129,15 +164,16 @@ struct single_use_func : single_use_func_base<R, Args...>
   }
 };
 
-using oneway_func_base = single_use_func_base<void>;
-template<class Function> using oneway_func = single_use_func<Function, void>;
+using any_ptr = std::shared_ptr<void>;
+using dependency_func_base = single_use_func_base<any_ptr, future<any_ptr>>;
+template<class Function> using dependency_func = single_use_func<Function, any_ptr, future<any_ptr>>;
 
 struct impl_base
 {
   virtual ~impl_base() {}
   virtual impl_base* clone() const noexcept = 0;
   virtual void destroy() noexcept = 0;
-  virtual void execute(std::unique_ptr<oneway_func_base> f) = 0;
+  virtual future<any_ptr> dependency_execute(std::unique_ptr<dependency_func_base> f, future<any_ptr> fut) = 0;
   virtual const type_info& target_type() const = 0;
   virtual void* target() = 0;
   virtual const void* target() const = 0;
@@ -169,9 +205,9 @@ struct impl : impl_base
       delete this;
   }
 
-  virtual void execute(std::unique_ptr<oneway_func_base> f)
+  virtual future<any_ptr> dependency_execute(std::unique_ptr<dependency_func_base> f, future<any_ptr> fut)
   {
-    executor_.execute([f = std::move(f)]() mutable { f.release()->call(); });
+    return executor_.dependency_execute([f = std::move(f)](auto pred) mutable { return f.release()->call(std::move(pred)); }, std::move(fut));
   }
 
   virtual const type_info& target_type() const
@@ -313,10 +349,10 @@ struct impl : impl_base
   }
 };
 
-} // namespace oneway_executor_impl
+} // namespace dependency_executor_impl
 
 template<class... SupportableProperties>
-class oneway_t::polymorphic_executor_type
+class dependency_t::polymorphic_executor_type
 {
 public:
   // construct / copy / destroy:
@@ -343,18 +379,18 @@ public:
   }
 
   template<class Executor> polymorphic_executor_type(Executor e,
-      typename std::enable_if<oneway_executor_impl::is_valid_target_v<
+      typename std::enable_if<dependency_executor_impl::is_valid_target_v<
         typename std::enable_if<!std::is_same<Executor, polymorphic_executor_type>::value, Executor>::type,
           SupportableProperties...>>::type* = 0)
   {
-    auto e2 = execution::require(std::move(e), oneway);
-    impl_ = new oneway_executor_impl::impl<decltype(e2), SupportableProperties...>(std::move(e2));
+    auto e2 = execution::require(std::move(e), dependency);
+    impl_ = new dependency_executor_impl::impl<decltype(e2), SupportableProperties...>(std::move(e2));
   }
 
   template<class... OtherSupportableProperties>
   polymorphic_executor_type(polymorphic_executor_type<OtherSupportableProperties...> e,
-      typename std::enable_if<oneway_executor_impl::contains_exact_property_list_v<
-        oneway_executor_impl::property_list<SupportableProperties...>,
+      typename std::enable_if<dependency_executor_impl::contains_exact_property_list_v<
+        dependency_executor_impl::property_list<SupportableProperties...>,
           OtherSupportableProperties...>>::type* = 0)
     : impl_(e.impl_ ? e.impl_->clone() : nullptr)
   {
@@ -362,8 +398,8 @@ public:
 
   template<class... OtherSupportableProperties>
   polymorphic_executor_type(polymorphic_executor_type<OtherSupportableProperties...> e,
-      typename std::enable_if<!oneway_executor_impl::contains_exact_property_list_v<
-        oneway_executor_impl::property_list<SupportableProperties...>,
+      typename std::enable_if<!dependency_executor_impl::contains_exact_property_list_v<
+        dependency_executor_impl::property_list<SupportableProperties...>,
           OtherSupportableProperties...>>::type* = 0) = delete;
 
   polymorphic_executor_type& operator=(const polymorphic_executor_type& e) noexcept
@@ -417,11 +453,11 @@ public:
 
   template<class Property,
     class = typename std::enable_if<
-      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         && is_interface_property<Property>::value>::type>
   typename Property::template polymorphic_executor_type<SupportableProperties...> require(const Property& p) const
   {
-    oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     if (!impl_) throw bad_executor();
     return std::unique_ptr<typename Property::template polymorphic_executor_type<>>(
         static_cast<typename Property::template polymorphic_executor_type<>*>(
@@ -430,31 +466,31 @@ public:
 
   template<class Property,
     class = typename std::enable_if<
-      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         && !is_interface_property<Property>::value>::type>
   polymorphic_executor_type require(const Property& p) const
   {
-    oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     return impl_ ? impl_->require(typeid(p1), &p1) : throw bad_executor();
   }
 
   template<class Property,
     class = typename std::enable_if<
-      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable>::type>
+      dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable>::type>
   friend polymorphic_executor_type prefer(const polymorphic_executor_type& e, const Property& p)
   {
-    oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     return e.get_impl() ? e.get_impl()->prefer(typeid(p1), &p1) : throw bad_executor();
   }
 
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
-        || oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
-      typename oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
+      dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+        || dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
+      typename dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
-    oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     using result_type = typename decltype(p1)::polymorphic_query_result_type;
     using tuple_type = std::tuple<result_type>;
     if (!impl_) throw bad_executor();
@@ -465,11 +501,11 @@ public:
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      !oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
-        && !oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
-      typename oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
+      !dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+        && !dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
+      typename dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
-    oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
+    dependency_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     using result_type = typename decltype(p1)::polymorphic_query_result_type;
     using tuple_type = std::tuple<result_type>;
     if (!impl_) throw bad_executor();
@@ -477,12 +513,102 @@ public:
     return std::get<0>(*result);
   }
 
-  template<class Function>
-  void execute(Function f) const
+  template<class Function, class T>
+  auto dependency_execute(Function f, future<T> fut) const -> future<decltype(f(std::move(fut)))>
   {
-    std::unique_ptr<oneway_executor_impl::oneway_func_base> fp(new oneway_executor_impl::oneway_func<Function>(std::move(f)));
-    impl_ ? impl_->execute(std::move(fp)) : throw bad_executor();
+    if (!impl_) throw bad_executor();
+
+    using result_type = decltype(f(std::move(fut)));
+
+    auto fut_wrap = fut.dependency(
+        [](future<T> pred)
+        {
+          if constexpr (std::is_same<T, void>::value)
+          {
+            pred.get();
+            return dependency_executor_impl::any_ptr();
+          }
+          else
+          {
+            return dependency_executor_impl::any_ptr(new T(pred.get()));
+          }
+        });
+
+    auto f_wrap = [f = std::move(f)](future<dependency_executor_impl::any_ptr> pred)
+    {
+      if constexpr (std::is_same<result_type, void>::value)
+      {
+        f(pred.dependency(
+              [](future<dependency_executor_impl::any_ptr> pred1)
+              {
+                if constexpr (std::is_same<T, void>::value)
+                {
+                  pred1.get();
+                }
+                else
+                {
+                  return T(std::move(*static_pointer_cast<T>(pred1.get())));
+                }
+              }));
+        return dependency_executor_impl::any_ptr();
+      }
+      else
+      {
+        return dependency_executor_impl::any_ptr(
+            new result_type(
+              f(pred.dependency(
+                [](future<dependency_executor_impl::any_ptr> pred1)
+                {
+                  if constexpr (std::is_same<T, void>::value)
+                  {
+                    pred1.get();
+                  }
+                  else
+                  {
+                    return T(std::move(*static_pointer_cast<T>(pred1.get())));
+                  }
+                }))));
+      }
+    };
+
+    std::unique_ptr<dependency_executor_impl::dependency_func_base> fp(new dependency_executor_impl::dependency_func<decltype(f_wrap)>(std::move(f_wrap)));
+    return impl_->dependency_execute(std::move(fp), std::move(fut_wrap)).dependency(
+        [](future<dependency_executor_impl::any_ptr> pred)
+        {
+          if constexpr (std::is_same<result_type, void>::value)
+          {
+            pred.get();
+          }
+          else
+          {
+            return result_type(std::move(*static_pointer_cast<result_type>(pred.get())));
+          }
+        });
   }
+
+#if 0
+  template<class Function, class T>
+  auto dependency_execute(Function f, future<T> fut) const -> future<decltype(f(std::move(fut)))>
+  {
+    auto fut_wrap = fut.dependency(
+        [](future<T> pred)
+        {
+          return dependency_executor_impl::any_ptr(new T(pred.get()));
+        });
+
+    auto f_wrap = [f = std::move(f)](future<dependency_executor_impl::any_ptr> pred)
+    {
+      f(pred.dependency(
+            [](future<dependency_executor_impl::any_ptr> pred1)
+            {
+              return T(std::move(*static_pointer_cast<T>(pred1.get())));
+            }));
+    };
+
+    std::unique_ptr<dependency_executor_impl::dependency_func_base> fp(new dependency_executor_impl::dependency_func<decltype(f_wrap)>(std::move(f_wrap)));
+    impl_ ? impl_->dependency_execute(std::move(fp), std::move(fut_wrap)) : throw bad_executor();
+  }
+#endif
 
   // polymorphic executor capacity:
 
@@ -558,10 +684,10 @@ public:
   }
 
 private:
-  template<class...> friend class oneway_t::polymorphic_executor_type;
-  polymorphic_executor_type(oneway_executor_impl::impl_base* i) noexcept : impl_(i) {}
-  oneway_executor_impl::impl_base* impl_;
-  const oneway_executor_impl::impl_base* get_impl() const { return impl_; }
+  template<class...> friend class dependency_t::polymorphic_executor_type;
+  polymorphic_executor_type(dependency_executor_impl::impl_base* i) noexcept : impl_(i) {}
+  dependency_executor_impl::impl_base* impl_;
+  const dependency_executor_impl::impl_base* get_impl() const { return impl_; }
 };
 
 } // namespace execution
@@ -569,4 +695,6 @@ private:
 } // namespace experimental
 } // namespace std
 
-#endif // STD_EXPERIMENTAL_BITS_ONEWAY_EXECUTOR_H
+#endif
+
+#endif // STD_EXPERIMENTAL_BITS_DEPENDENCY_EXECUTOR_H
