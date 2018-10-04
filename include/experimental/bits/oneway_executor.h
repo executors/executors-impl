@@ -266,7 +266,7 @@ struct impl : impl_base
 
   template<class Head, class... Tail>
   impl_base* prefer_helper(property_list<Head, Tail...>, const type_info& t, const void* p,
-    typename std::enable_if<Head::is_requirable && !is_interface_property<Head>::value>::type* = 0) const
+    typename std::enable_if<Head::is_preferable && !is_interface_property<Head>::value>::type* = 0) const
   {
     if (t == typeid(Head))
     {
@@ -278,7 +278,7 @@ struct impl : impl_base
 
   template<class Head, class... Tail>
   impl_base* prefer_helper(property_list<Head, Tail...>, const type_info& t, const void* p,
-    typename std::enable_if<!Head::is_requirable || is_interface_property<Head>::value>::type* = 0) const
+    typename std::enable_if<!Head::is_preferable || is_interface_property<Head>::value>::type* = 0) const
   {
     return prefer_helper(property_list<Tail...>{}, t, p);
   }
