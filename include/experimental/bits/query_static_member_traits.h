@@ -19,7 +19,7 @@ struct query_static_member_traits
 template<class Executor, class Property>
 struct query_static_member_traits<Executor, Property,
   std::void_t<
-    decltype(std::declval<Executor>().query(std::declval<Property>()))
+    decltype(std::decay_t<Executor>::query(std::declval<Property>()))
   >>
 {
   static constexpr bool is_valid = true;
