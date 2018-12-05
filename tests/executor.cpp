@@ -1,8 +1,8 @@
-#include <experimental/execution>
-#include <experimental/thread_pool>
+#include <execution>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 using oneway_executor = execution::executor<
     execution::oneway_t,

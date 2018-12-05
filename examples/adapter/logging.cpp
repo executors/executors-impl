@@ -1,11 +1,11 @@
 #include <cassert>
-#include <experimental/thread_pool>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 template <class InnerExecutor>
 class logging_executor

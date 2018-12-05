@@ -1,12 +1,12 @@
 #include <cassert>
 #include <chrono>
-#include <experimental/thread_pool>
 #include <iostream>
 #include <mutex>
 #include <string>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 struct strand_state
 {

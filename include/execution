@@ -1,0 +1,113 @@
+#ifndef STD_EXECUTION_INCLUDED
+#define STD_EXECUTION_INCLUDED
+
+#include <bits/execution/require.h>
+#include <bits/execution/prefer.h>
+#include <bits/execution/query.h>
+
+namespace std {
+namespace execution {
+
+namespace
+{
+  // Require customization point.
+  constexpr const auto& require = require_impl::customization_point<>;
+
+  // Prefer customization point.
+  constexpr const auto& prefer = prefer_impl::customization_point<>;
+
+  // Query customization point.
+  constexpr const auto& query = query_impl::customization_point<>;
+}
+
+// Type trait to determine whether the require customization point is valid for the specified arguments.
+template<class Executor, class... Properties> struct can_require;
+
+template<class Executor, class... Properties>
+  constexpr bool can_require_v = can_require<Executor, Properties...>::value;
+
+// Type trait to determine whether the prefer customization point is valid for the specified arguments.
+template<class Executor, class... Properties> struct can_prefer;
+
+template<class Executor, class... Properties>
+  constexpr bool can_prefer_v = can_prefer<Executor, Properties...>::value;
+
+// Type trait to determine whether the query customization point is valid for the specified arguments.
+template<class Executor, class Property> struct can_query;
+
+template<class Executor, class Property>
+  constexpr bool can_query_v = can_query<Executor, Property>::value;
+
+// Associated execution context.
+struct context_t;
+
+// Interface properties.
+struct oneway_t;
+struct bulk_oneway_t;
+
+// Blocking behaviour.
+struct blocking_t;
+
+// Allow adaptation of blocking and directionality (e.g. twoway in terms of oneway).
+struct blocking_adaptation_t;
+
+// Whether submitted tasks represent a fork or continuation of the control flow.
+struct relationship_t;
+
+// Whether there is outstanding work, i.e. an indication of likely task submission in the future.
+struct outstanding_work_t;
+
+// Properties for bulk execution forward progress guarantees.
+struct bulk_guarantee_t;
+
+// Properties for mapping of execution on to threads.
+struct mapping_t;
+
+// Memory allocations.
+template<class ProtoAllocator> struct allocator_t;
+
+// Type traits to determine conformance to executor type requirements.
+template<class Executor> struct is_oneway_executor;
+template<class Executor> struct is_bulk_oneway_executor;
+
+template<class Executor> constexpr bool is_oneway_executor_v = is_oneway_executor<Executor>::value;
+template<class Executor> constexpr bool is_bulk_oneway_executor_v = is_bulk_oneway_executor<Executor>::value;
+
+// Type traits to obtain a bulk executor's shape and index types.
+template<class Executor> struct executor_shape;
+template<class Executor> struct executor_index;
+
+template<class Executor> using executor_shape_t = typename executor_shape<Executor>::type;
+template<class Executor> using executor_index_t = typename executor_index<Executor>::type;
+
+// Polymorphic wrappers.
+class bad_executor;
+template<class InterfaceProperty, class... SupportableProperties>
+  using executor = typename InterfaceProperty::template polymorphic_executor_type<InterfaceProperty, SupportableProperties...>;
+template<class InnerProperty> struct prefer_only;
+
+} // namespace execution
+} // namespace std
+
+#include <bits/execution/can_require.h>
+#include <bits/execution/can_prefer.h>
+#include <bits/execution/can_query.h>
+#include <bits/execution/is_oneway_executor.h>
+#include <bits/execution/is_bulk_oneway_executor.h>
+#include <bits/execution/context.h>
+#include <bits/execution/oneway.h>
+#include <bits/execution/bulk_oneway.h>
+#include <bits/execution/blocking.h>
+#include <bits/execution/blocking_adaptation.h>
+#include <bits/execution/relationship.h>
+#include <bits/execution/outstanding_work.h>
+#include <bits/execution/bulk_guarantee.h>
+#include <bits/execution/mapping.h>
+#include <bits/execution/allocator.h>
+#include <bits/execution/executor_shape.h>
+#include <bits/execution/executor_index.h>
+#include <bits/execution/oneway_executor.h>
+#include <bits/execution/bulk_oneway_executor.h>
+#include <bits/execution/prefer_only.h>
+
+#endif // STD_EXECUTION_INCLUDED

@@ -3,10 +3,10 @@
 
 #include <condition_variable>
 #include <deque>
-#include <experimental/execution>
-#include <experimental/thread_pool>
+#include <execution>
 #include <memory>
 #include <mutex>
+#include <thread_pool>
 #include <typeinfo>
 #include <vector>
 
@@ -91,8 +91,8 @@ public:
   friend void send(Message msg, actor_address from, actor_address to)
   {
     // Execute the message handler in the context of the target's executor.
-    std::experimental::execution::require(to->executor_,
-      std::experimental::execution::blocking.never).execute(
+    std::execution::require(to->executor_,
+      std::execution::blocking.never).execute(
         [=, msg=std::move(msg)]() mutable
         {
           to->call_handler(std::move(msg), from);
@@ -101,7 +101,7 @@ public:
 
 protected:
   // Construct the actor to use the specified pool for all message handlers.
-  actor(std::experimental::static_thread_pool& tp)
+  actor(std::static_thread_pool& tp)
     : executor_(tp.executor())
   {
   }
@@ -139,10 +139,10 @@ protected:
   void tail_send(Message msg, actor_address to)
   {
     // Execute the message handler in the context of the target's executor.
-    std::experimental::execution::prefer(
-      std::experimental::execution::require(to->executor_,
-        std::experimental::execution::blocking.never),
-          std::experimental::execution::relationship.continuation).execute(
+    std::execution::prefer(
+      std::execution::require(to->executor_,
+        std::execution::blocking.never),
+          std::execution::relationship.continuation).execute(
             [=, msg=std::move(msg), from=this]() mutable
             {
               to->call_handler(std::move(msg), from);
@@ -168,7 +168,7 @@ private:
   // All messages associated with a single actor object should be processed
   // non-concurrently. We require a static thread pool of size 1 to ensure
   // non-concurrent execution.
-  std::experimental::static_thread_pool::executor_type executor_;
+  std::static_thread_pool::executor_type executor_;
 
   std::vector<std::shared_ptr<message_handler_base>> handlers_;
 };
@@ -176,13 +176,13 @@ private:
 // A concrete actor that allows synchronous message retrieval.
 template <class Message>
 class receiver :
-  private std::experimental::static_thread_pool,
+  private std::static_thread_pool,
   public actor
 {
 public:
   receiver()
-    : std::experimental::static_thread_pool(1),
-      actor(*static_cast<std::experimental::static_thread_pool*>(this))
+    : std::static_thread_pool(1),
+      actor(*static_cast<std::static_thread_pool*>(this))
   {
     register_handler(&receiver::message_handler);
   }
@@ -220,7 +220,7 @@ private:
 class member : public actor
 {
 public:
-  explicit member(std::experimental::static_thread_pool& tp)
+  explicit member(std::static_thread_pool& tp)
     : actor(tp)
   {
     register_handler(&member::init_handler);
@@ -262,7 +262,7 @@ int main()
   const int token_value = (num_hops + num_actors - 1) / num_actors;
   const std::size_t actors_per_thread = num_actors / num_threads;
 
-  struct single_thread_pool : std::experimental::static_thread_pool { single_thread_pool() : static_thread_pool(1) {} };
+  struct single_thread_pool : std::static_thread_pool { single_thread_pool() : static_thread_pool(1) {} };
   single_thread_pool pools[num_threads];
   std::vector<std::shared_ptr<member>> members(num_actors);
   receiver<int> rcvr;

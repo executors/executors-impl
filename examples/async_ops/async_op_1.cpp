@@ -1,10 +1,10 @@
 #include <chrono>
-#include <experimental/thread_pool>
 #include <iostream>
 #include <thread>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 // An operation that doubles a value asynchronously.
 template <class TaskExecutor, class CompletionExecutor, class CompletionHandler>

@@ -1,7 +1,7 @@
-#include <experimental/thread_pool>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 template<class Executor>
 void static_thread_pool_executor_compile_test(Executor ex1)
