@@ -1,4 +1,4 @@
-#include <experimental/execution>
+#include <execution>
 #include <condition_variable>
 #include <future>
 #include <memory>
@@ -8,7 +8,7 @@
 #include <tuple>
 #include <vector>
 
-namespace execution = std::experimental::execution;
+namespace execution = std::execution;
 
 //------------------------------------------------------------------------------
 
@@ -259,15 +259,14 @@ std::future<void> pipeline(queue_back<T> in, F f)
 
   // Run the function, and as we're the last stage return a future so that the
   // caller can wait for the pipeline to finish.
-  return execution::require(ex,
-      execution::single,
-      execution::blocking_adaptation.allowed,
-      execution::twoway
-    ).twoway_execute(
+  std::packaged_task<void()> task(
       [in, f = std::move(f)]() mutable
       {
         f(in);
       });
+  std::future<void> fut = task.get_future();
+  std::require(ex, execution::oneway).execute(std::move(task));
+  return fut;
 }
 
 // Launch an intermediate stage in a pipeline.
@@ -286,8 +285,7 @@ std::future<void> pipeline(queue_back<T> in, F f, Tail... t)
   auto ex = get_associated_executor(f, new_thread_executor());
 
   // Run the function.
-  execution::require(ex,
-      execution::single,
+  std::require(ex,
       execution::oneway
     ).execute(
       [in, out, f = std::move(f)]() mutable
@@ -316,8 +314,7 @@ std::future<void> pipeline(F f, Tail... t)
   auto ex = get_associated_executor(f, new_thread_executor());
 
   // Run the function.
-  execution::require(ex,
-      execution::single,
+  std::require(ex,
       execution::oneway
     ).execute(
       [out, f = std::move(f)]() mutable
@@ -332,7 +329,7 @@ std::future<void> pipeline(F f, Tail... t)
 
 //------------------------------------------------------------------------------
 
-#include <experimental/thread_pool>
+#include <thread_pool>
 #include <iostream>
 #include <string>
 
@@ -373,7 +370,7 @@ void writer(queue_back<std::string> in)
 
 int main()
 {
-  std::experimental::static_thread_pool pool(1);
+  std::static_thread_pool pool(1);
 
   auto f = pipeline(reader, filter, bind_executor(pool.executor(), upper), writer);
   f.wait();

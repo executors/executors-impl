@@ -2,7 +2,7 @@
 #define STD_BITS_EXECUTION_ENUMERATOR_ADAPTER_H_INCLUDED
 
 #include <bits/execution/adapter.h>
-#include <bits/execution/require.h>
+#include <bits/properties/require.h>
 
 namespace std {
 namespace execution {
@@ -18,9 +18,9 @@ public:
 
   template<int N>
   constexpr auto require(const typename Enumeration::template enumerator<N>& p) const
-    -> decltype(execution::require(declval<Executor>(), p))
+    -> decltype(std::require(declval<Executor>(), p))
   {
-    return execution::require(this->executor_, p);
+    return std::require(this->executor_, p);
   }
 
   static constexpr Enumeration query(const Enumeration&) noexcept

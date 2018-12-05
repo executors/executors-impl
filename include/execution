@@ -1,42 +1,10 @@
 #ifndef STD_EXECUTION_INCLUDED
 #define STD_EXECUTION_INCLUDED
 
-#include <bits/execution/require.h>
-#include <bits/execution/prefer.h>
-#include <bits/execution/query.h>
+#include <properties>
 
 namespace std {
 namespace execution {
-
-namespace
-{
-  // Require customization point.
-  constexpr const auto& require = require_impl::customization_point<>;
-
-  // Prefer customization point.
-  constexpr const auto& prefer = prefer_impl::customization_point<>;
-
-  // Query customization point.
-  constexpr const auto& query = query_impl::customization_point<>;
-}
-
-// Type trait to determine whether the require customization point is valid for the specified arguments.
-template<class Executor, class... Properties> struct can_require;
-
-template<class Executor, class... Properties>
-  constexpr bool can_require_v = can_require<Executor, Properties...>::value;
-
-// Type trait to determine whether the prefer customization point is valid for the specified arguments.
-template<class Executor, class... Properties> struct can_prefer;
-
-template<class Executor, class... Properties>
-  constexpr bool can_prefer_v = can_prefer<Executor, Properties...>::value;
-
-// Type trait to determine whether the query customization point is valid for the specified arguments.
-template<class Executor, class Property> struct can_query;
-
-template<class Executor, class Property>
-  constexpr bool can_query_v = can_query<Executor, Property>::value;
 
 // Associated execution context.
 struct context_t;
@@ -84,14 +52,10 @@ template<class Executor> using executor_index_t = typename executor_index<Execut
 class bad_executor;
 template<class InterfaceProperty, class... SupportableProperties>
   using executor = typename InterfaceProperty::template polymorphic_executor_type<InterfaceProperty, SupportableProperties...>;
-template<class InnerProperty> struct prefer_only;
 
 } // namespace execution
 } // namespace std
 
-#include <bits/execution/can_require.h>
-#include <bits/execution/can_prefer.h>
-#include <bits/execution/can_query.h>
 #include <bits/execution/is_oneway_executor.h>
 #include <bits/execution/is_bulk_oneway_executor.h>
 #include <bits/execution/context.h>
@@ -108,6 +72,5 @@ template<class InnerProperty> struct prefer_only;
 #include <bits/execution/executor_index.h>
 #include <bits/execution/oneway_executor.h>
 #include <bits/execution/bulk_oneway_executor.h>
-#include <bits/execution/prefer_only.h>
 
 #endif // STD_EXECUTION_INCLUDED

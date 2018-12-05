@@ -1,7 +1,7 @@
-#include <experimental/execution>
+#include <execution>
 #include <iostream>
 
-namespace execution = std::experimental::execution;
+namespace execution = std::execution;
 
 class inline_executor
 {
@@ -30,6 +30,6 @@ static_assert(execution::is_oneway_executor_v<inline_executor>, "one way executo
 int main()
 {
   inline_executor ex1;
-  auto ex2 = execution::require(ex1, execution::blocking.always);
+  auto ex2 = std::require(ex1, execution::blocking.always);
   ex2.execute([]{ std::cout << "we made it\n"; });
 }

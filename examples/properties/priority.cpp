@@ -3,9 +3,9 @@
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <experimental/execution>
+#include <execution>
 
-namespace execution = std::experimental::execution;
+namespace execution = std::execution;
 
 namespace custom_props {
 
@@ -155,12 +155,12 @@ private:
 int main()
 {
   priority_scheduler sched;
-  auto ex = execution::require(sched.executor(), execution::oneway, execution::single);
-  auto prefer_low = execution::prefer(ex, custom_props::low_priority);
-  auto low = execution::require(ex, custom_props::low_priority);
-  auto med = execution::require(ex, custom_props::normal_priority);
-  auto high = execution::require(ex, custom_props::high_priority);
-  execution::executor<execution::oneway_t, execution::single_t, custom_props::priority> poly_high(high);
+  auto ex = std::require(sched.executor(), execution::oneway);
+  auto prefer_low = std::prefer(ex, custom_props::low_priority);
+  auto low = std::require(ex, custom_props::low_priority);
+  auto med = std::require(ex, custom_props::normal_priority);
+  auto high = std::require(ex, custom_props::high_priority);
+  execution::executor<execution::oneway_t, custom_props::priority> poly_high(high);
   prefer_low.execute([]{ std::cout << "1\n"; });
   low.execute([]{ std::cout << "11\n"; });
   low.execute([]{ std::cout << "111\n"; });
@@ -170,7 +170,7 @@ int main()
   high.execute([]{ std::cout << "33\n"; });
   high.execute([]{ std::cout << "333\n"; });
   poly_high.execute([]{ std::cout << "3333\n"; });
-  execution::require(ex, custom_props::priority{-1}).execute([&]{ sched.stop(); });
+  std::require(ex, custom_props::priority{-1}).execute([&]{ sched.stop(); });
   sched.run();
-  std::cout << "polymorphic query result = " << execution::query(poly_high, custom_props::priority{}) << "\n";
+  std::cout << "polymorphic query result = " << std::query(poly_high, custom_props::priority{}) << "\n";
 }

@@ -1,8 +1,7 @@
-#ifndef STD_BITS_EXECUTION_PREFER_ONLY_H_INCLUDED
-#define STD_BITS_EXECUTION_PREFER_ONLY_H_INCLUDED
+#ifndef STD_BITS_PROPERTIES_PREFER_ONLY_H_INCLUDED
+#define STD_BITS_PROPERTIES_PREFER_ONLY_H_INCLUDED
 
 namespace std {
-namespace execution {
 namespace prefer_only_impl {
 
 template<class>
@@ -40,8 +39,8 @@ struct prefer_only : prefer_only_impl::prefer_only_base<InnerProperty>
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = InnerProperty::is_preferable;
 
-  template<class Executor, class Type = decltype(InnerProperty::template static_query_v<Executor>)>
-    static constexpr Type static_query_v = InnerProperty::template static_query_v<Executor>;
+  template<class Entity, class Type = decltype(InnerProperty::template static_query_v<Entity>)>
+    static constexpr Type static_query_v = InnerProperty::template static_query_v<Entity>;
 
   constexpr prefer_only(const InnerProperty& p) : property(p) {}
 
@@ -53,24 +52,23 @@ struct prefer_only : prefer_only_impl::prefer_only_base<InnerProperty>
     return prefer_only_impl::property_value(property);
   }
 
-  template<class Executor, class Property, class = typename std::enable_if<std::is_same<Property, prefer_only>::value>::type>
-  friend auto prefer(Executor ex, const Property& p)
-    noexcept(noexcept(execution::prefer(std::move(ex), std::declval<const InnerProperty>())))
-      -> decltype(execution::prefer(std::move(ex), std::declval<const InnerProperty>()))
+  template<class Entity, class Property, class = typename std::enable_if<std::is_same<Property, prefer_only>::value>::type>
+  friend auto prefer(Entity ex, const Property& p)
+    noexcept(noexcept(std::prefer(std::move(ex), std::declval<const InnerProperty>())))
+      -> decltype(std::prefer(std::move(ex), std::declval<const InnerProperty>()))
   {
-    return execution::prefer(std::move(ex), p.property);
+    return std::prefer(std::move(ex), p.property);
   }
 
-  template<class Executor, class Property, class = typename std::enable_if<std::is_same<Property, prefer_only>::value>::type>
-  friend constexpr auto query(const Executor& ex, const Property& p)
-    noexcept(noexcept(execution::query(ex, std::declval<const InnerProperty>())))
-    -> decltype(execution::query(ex, std::declval<const InnerProperty>()))
+  template<class Entity, class Property, class = typename std::enable_if<std::is_same<Property, prefer_only>::value>::type>
+  friend constexpr auto query(const Entity& ex, const Property& p)
+    noexcept(noexcept(std::query(ex, std::declval<const InnerProperty>())))
+    -> decltype(std::query(ex, std::declval<const InnerProperty>()))
   {
-    return execution::query(ex, p.property);
+    return std::query(ex, p.property);
   }
 };
 
-} // namespace execution
 } // namespace std
 
-#endif // STD_BITS_EXECUTION_PREFER_ONLY_H_INCLUDED
+#endif // STD_BITS_PROPERTIES_PREFER_ONLY_H_INCLUDED

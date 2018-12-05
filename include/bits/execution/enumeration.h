@@ -1,7 +1,7 @@
 #ifndef STD_BITS_EXECUTION_ENUMERATION_H_INCLUDED
 #define STD_BITS_EXECUTION_ENUMERATION_H_INCLUDED
 
-#include <bits/execution/can_query.h>
+#include <bits/properties/can_query.h>
 #include <type_traits>
 
 namespace std {
@@ -41,7 +41,7 @@ struct enumeration
     template<class Executor>
     static constexpr auto static_query()
       -> std::enable_if_t<
-        !query_member_traits<Executor, Enumerator>::is_valid
+        !std::impl::query_member_traits<Executor, Enumerator>::is_valid
           && use_default_static_query<Executor>::value,
         Enumerator
       >
@@ -109,7 +109,7 @@ struct enumeration
   template<class Executor, int I = 0>
   struct static_query_type :
     std::conditional_t<
-      query_static_traits<Executor, enumerator<I> >::is_valid,
+      std::impl::query_static_traits<Executor, enumerator<I> >::is_valid,
       std::decay<enumerator<I> >,
       std::conditional_t<
         I + 1 < N,
@@ -123,7 +123,7 @@ struct enumeration
   template<class Executor>
   static constexpr auto static_query()
     -> std::enable_if_t<
-      !query_member_traits<Executor, Derived>::is_valid,
+      !std::impl::query_member_traits<Executor, Derived>::is_valid,
       decltype(static_query_type<Executor>::type::template static_query_v<Executor>)
     >
   {
@@ -165,10 +165,10 @@ struct enumeration
   template<class Executor, class Property,
     class = std::enable_if_t<std::is_same<Property, Derived>::value>>
   friend constexpr auto query(const Executor& ex, const Property&)
-    noexcept(noexcept(execution::query(ex, typename query_type<Executor>::type())))
-    -> decltype(execution::query(ex, typename query_type<Executor>::type()))
+    noexcept(noexcept(std::query(ex, typename query_type<Executor>::type())))
+    -> decltype(std::query(ex, typename query_type<Executor>::type()))
   {
-    return execution::query(ex, typename query_type<Executor>::type());
+    return std::query(ex, typename query_type<Executor>::type());
   }
 
   friend constexpr bool operator==(const Derived& a, const Derived& b) noexcept

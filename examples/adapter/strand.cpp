@@ -164,8 +164,8 @@ int main()
 {
   static_thread_pool pool{2};
   strand<static_thread_pool::executor_type> s1(pool.executor());
-  assert(&execution::query(s1, execution::context) == &pool);
-  s1.require(execution::blocking.never).execute(foo{s1});
-  s1.require(execution::blocking.possibly).execute([]{ std::cout << "After 0, before 1\n"; });
+  assert(&std::query(s1, execution::context) == &pool);
+  std::require(s1, execution::blocking.never).execute(foo{s1});
+  std::require(s1, execution::blocking.possibly).execute([]{ std::cout << "After 0, before 1\n"; });
   pool.wait();
 }

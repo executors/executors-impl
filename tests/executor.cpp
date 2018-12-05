@@ -63,26 +63,26 @@ void oneway_executor_compile_test()
 
   ex1.assign(pool.executor());
 
-  bulk_oneway_executor ex8 = execution::require(cex1, execution::bulk_oneway);
+  bulk_oneway_executor ex8 = std::require(cex1, execution::bulk_oneway);
 
-  ex1 = execution::require(cex1, execution::oneway);
-  ex1 = execution::require(cex1, execution::mapping.thread);
-  ex1 = execution::require(cex1, execution::blocking.never);
-  ex1 = execution::require(cex1, execution::blocking.possibly);
-  ex1 = execution::require(cex1, execution::blocking.always);
+  ex1 = std::require(cex1, execution::oneway);
+  ex1 = std::require(cex1, execution::mapping.thread);
+  ex1 = std::require(cex1, execution::blocking.never);
+  ex1 = std::require(cex1, execution::blocking.possibly);
+  ex1 = std::require(cex1, execution::blocking.always);
 
-  ex1 = execution::prefer(cex1, execution::mapping.thread);
-  ex1 = execution::prefer(cex1, execution::blocking.never);
-  ex1 = execution::prefer(cex1, execution::blocking.possibly);
-  ex1 = execution::prefer(cex1, execution::blocking.always);
-  ex1 = execution::prefer(cex1, execution::relationship.fork);
-  ex1 = execution::prefer(cex1, execution::relationship.continuation);
-  ex1 = execution::prefer(cex1, execution::outstanding_work.untracked);
-  ex1 = execution::prefer(cex1, execution::outstanding_work.tracked);
-  ex1 = execution::prefer(cex1, execution::bulk_guarantee.sequenced);
-  ex1 = execution::prefer(cex1, execution::bulk_guarantee.parallel);
-  ex1 = execution::prefer(cex1, execution::bulk_guarantee.unsequenced);
-  ex1 = execution::prefer(cex1, execution::mapping.new_thread);
+  ex1 = std::prefer(cex1, execution::mapping.thread);
+  ex1 = std::prefer(cex1, execution::blocking.never);
+  ex1 = std::prefer(cex1, execution::blocking.possibly);
+  ex1 = std::prefer(cex1, execution::blocking.always);
+  ex1 = std::prefer(cex1, execution::relationship.fork);
+  ex1 = std::prefer(cex1, execution::relationship.continuation);
+  ex1 = std::prefer(cex1, execution::outstanding_work.untracked);
+  ex1 = std::prefer(cex1, execution::outstanding_work.tracked);
+  ex1 = std::prefer(cex1, execution::bulk_guarantee.sequenced);
+  ex1 = std::prefer(cex1, execution::bulk_guarantee.parallel);
+  ex1 = std::prefer(cex1, execution::bulk_guarantee.unsequenced);
+  ex1 = std::prefer(cex1, execution::mapping.new_thread);
 
   cex1.execute([]{});
 
@@ -160,26 +160,26 @@ void bulk_oneway_executor_compile_test()
 
   ex1.assign(pool.executor());
 
-  oneway_executor ex8 = execution::require(cex1, execution::oneway);
+  oneway_executor ex8 = std::require(cex1, execution::oneway);
 
-  ex1 = execution::require(cex1, execution::bulk_oneway);
-  ex1 = execution::require(cex1, execution::mapping.thread);
-  ex1 = execution::require(cex1, execution::blocking.never);
-  ex1 = execution::require(cex1, execution::blocking.possibly);
-  ex1 = execution::require(cex1, execution::blocking.always);
+  ex1 = std::require(cex1, execution::bulk_oneway);
+  ex1 = std::require(cex1, execution::mapping.thread);
+  ex1 = std::require(cex1, execution::blocking.never);
+  ex1 = std::require(cex1, execution::blocking.possibly);
+  ex1 = std::require(cex1, execution::blocking.always);
 
-  ex1 = execution::prefer(cex1, execution::mapping.thread);
-  ex1 = execution::prefer(cex1, execution::blocking.never);
-  ex1 = execution::prefer(cex1, execution::blocking.possibly);
-  ex1 = execution::prefer(cex1, execution::blocking.always);
-  ex1 = execution::prefer(cex1, execution::relationship.fork);
-  ex1 = execution::prefer(cex1, execution::relationship.continuation);
-  ex1 = execution::prefer(cex1, execution::outstanding_work.untracked);
-  ex1 = execution::prefer(cex1, execution::outstanding_work.tracked);
-  ex1 = execution::prefer(cex1, execution::bulk_guarantee.sequenced);
-  ex1 = execution::prefer(cex1, execution::bulk_guarantee.parallel);
-  ex1 = execution::prefer(cex1, execution::bulk_guarantee.unsequenced);
-  ex1 = execution::prefer(cex1, execution::mapping.new_thread);
+  ex1 = std::prefer(cex1, execution::mapping.thread);
+  ex1 = std::prefer(cex1, execution::blocking.never);
+  ex1 = std::prefer(cex1, execution::blocking.possibly);
+  ex1 = std::prefer(cex1, execution::blocking.always);
+  ex1 = std::prefer(cex1, execution::relationship.fork);
+  ex1 = std::prefer(cex1, execution::relationship.continuation);
+  ex1 = std::prefer(cex1, execution::outstanding_work.untracked);
+  ex1 = std::prefer(cex1, execution::outstanding_work.tracked);
+  ex1 = std::prefer(cex1, execution::bulk_guarantee.sequenced);
+  ex1 = std::prefer(cex1, execution::bulk_guarantee.parallel);
+  ex1 = std::prefer(cex1, execution::bulk_guarantee.unsequenced);
+  ex1 = std::prefer(cex1, execution::mapping.new_thread);
 
   cex1.bulk_execute([](std::size_t, int&){}, 1, []{ return 42; });
 

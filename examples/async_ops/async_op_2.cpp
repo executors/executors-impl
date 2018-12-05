@@ -15,7 +15,7 @@ void my_twoway_operation_1(const TaskExecutor& tex, int n,
   {
     // Nothing to do. Operation finishes immediately.
     // Specify non-blocking to prevent stack overflow.
-    execution::require(cex,
+    std::require(cex,
         execution::oneway,
         execution::blocking.never
       ).execute(
@@ -27,16 +27,16 @@ void my_twoway_operation_1(const TaskExecutor& tex, int n,
   else
   {
     // Simulate an asynchronous operation.
-    execution::require(tex,
+    std::require(tex,
         execution::oneway,
         execution::blocking.never
       ).execute(
-        [n, cex = execution::prefer(cex, execution::outstanding_work.tracked), h = std::move(h)]() mutable
+        [n, cex = std::prefer(cex, execution::outstanding_work.tracked), h = std::move(h)]() mutable
         {
           int result = n * 2;
           std::this_thread::sleep_for(std::chrono::seconds(1)); // Simulate long running work.
-          execution::prefer(
-              execution::require(cex, execution::oneway),
+          std::prefer(
+              std::require(cex, execution::oneway),
               execution::blocking.possibly
             ).execute(
               [h = std::move(h), result]() mutable
@@ -77,10 +77,10 @@ void my_twoway_operation_2(const TaskExecutor& tex, int n, int m,
   // Intermediate steps of the composed operation are always continuations,
   // so we save the stored executors with that attribute rebound in.
   my_twoway_operation_1(tex, n, cex,
-    my_twoway_operation_2_impl<decltype(execution::prefer(tex, execution::relationship.continuation)),
-      decltype(execution::prefer(cex, execution::relationship.continuation)), CompletionHandler>{
-        execution::prefer(tex, execution::relationship.continuation), 0, m,
-        execution::prefer(cex, execution::relationship.continuation), std::move(h)});
+    my_twoway_operation_2_impl<decltype(std::prefer(tex, execution::relationship.continuation)),
+      decltype(std::prefer(cex, execution::relationship.continuation)), CompletionHandler>{
+        std::prefer(tex, execution::relationship.continuation), 0, m,
+        std::prefer(cex, execution::relationship.continuation), std::move(h)});
 }
 
 int main()

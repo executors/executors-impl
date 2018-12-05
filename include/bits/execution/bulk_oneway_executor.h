@@ -210,8 +210,8 @@ struct impl : impl_base
   {
     if (t == typeid(Head))
     {
-      using executor_type = decltype(execution::require(executor_, *static_cast<const Head*>(p)));
-      return new impl<executor_type, SupportableProperties...>(execution::require(executor_, *static_cast<const Head*>(p)));
+      using executor_type = decltype(std::require(executor_, *static_cast<const Head*>(p)));
+      return new impl<executor_type, SupportableProperties...>(std::require(executor_, *static_cast<const Head*>(p)));
     }
     return require_helper(property_list<Tail...>{}, t, p);
   }
@@ -242,7 +242,7 @@ struct impl : impl_base
     {
       return new typename Head::template polymorphic_executor_type<>(
         typename Head::template polymorphic_executor_type<SupportableProperties...>(
-          execution::require(executor_, *static_cast<const Head*>(p))));
+          std::require(executor_, *static_cast<const Head*>(p))));
     }
     return require_interface_helper(property_list<Tail...>{}, t, p);
   }
@@ -270,8 +270,8 @@ struct impl : impl_base
   {
     if (t == typeid(Head))
     {
-      using executor_type = decltype(execution::prefer(executor_, *static_cast<const Head*>(p)));
-      return new impl<executor_type, SupportableProperties...>(execution::prefer(executor_, *static_cast<const Head*>(p)));
+      using executor_type = decltype(std::prefer(executor_, *static_cast<const Head*>(p)));
+      return new impl<executor_type, SupportableProperties...>(std::prefer(executor_, *static_cast<const Head*>(p)));
     }
     return prefer_helper(property_list<Tail...>{}, t, p);
   }
@@ -297,7 +297,7 @@ struct impl : impl_base
   void* query_helper(property_list<Head, Tail...>, const type_info& t, const void* p, typename std::enable_if<can_query_v<Executor, Head>>::type* = 0) const
   {
     if (t == typeid(Head))
-      return new std::tuple<typename Head::polymorphic_query_result_type>(execution::query(executor_, *static_cast<const Head*>(p)));
+      return new std::tuple<typename Head::polymorphic_query_result_type>(std::query(executor_, *static_cast<const Head*>(p)));
     return query_helper(property_list<Tail...>{}, t, p);
   }
 
@@ -347,7 +347,7 @@ public:
         typename std::enable_if<!std::is_same<Executor, polymorphic_executor_type>::value, Executor>::type,
           SupportableProperties...>>::type* = 0)
   {
-    auto e2 = execution::require(std::move(e), bulk_oneway);
+    auto e2 = std::require(std::move(e), bulk_oneway);
     impl_ = new bulk_oneway_executor_impl::impl<decltype(e2), SupportableProperties...>(std::move(e2));
   }
 

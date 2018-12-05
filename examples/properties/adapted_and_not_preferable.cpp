@@ -1,9 +1,9 @@
-#include <experimental/thread_pool>
+#include <thread_pool>
 #include <cassert>
 #include <iostream>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 namespace custom_props
 {
@@ -70,18 +70,6 @@ namespace custom_props
             return f();
           });
     }
-
-    template <class Function>
-    auto twoway_execute(Function f) const
-      -> decltype(inner_declval<Function>().twoway_execute(std::move(f)))
-    {
-      return inner_ex_.twoway_execute(
-          [tracing = tracing_, f = std::move(f)]() mutable
-          {
-            if (tracing) std::cout << "running function adapted\n";
-            return f();
-          });
-    }
   };
 
   template <class Executor>
@@ -124,24 +112,24 @@ int main()
 {
   static_thread_pool pool{1};
 
-  auto ex1 = execution::require(inline_executor(), custom_props::tracing{true});
-  assert(execution::query(ex1, custom_props::tracing{}));
+  auto ex1 = std::require(inline_executor(), custom_props::tracing{true});
+  assert(std::query(ex1, custom_props::tracing{}));
   ex1.execute([]{ std::cout << "we made it\n"; });
 
-  static_assert(!execution::can_prefer_v<inline_executor, custom_props::tracing>, "cannot prefer");
+  static_assert(!std::can_prefer_v<inline_executor, custom_props::tracing>, "cannot prefer");
 
-  auto ex3 = execution::require(pool.executor(), custom_props::tracing{true});
-  assert(execution::query(ex3, custom_props::tracing{}));
+  auto ex3 = std::require(pool.executor(), custom_props::tracing{true});
+  assert(std::query(ex3, custom_props::tracing{}));
   ex3.execute([]{ std::cout << "we made it again\n"; });
 
-  static_assert(!execution::can_prefer_v<static_thread_pool::executor_type, custom_props::tracing>, "cannot prefer");
+  static_assert(!std::can_prefer_v<static_thread_pool::executor_type, custom_props::tracing>, "cannot prefer");
 
-  execution::executor<execution::oneway_t, execution::single_t, custom_props::tracing> ex5 = pool.executor();
-  auto ex6 = execution::require(ex5, custom_props::tracing{true});
-  assert(execution::query(ex6, custom_props::tracing{}));
+  execution::executor<execution::oneway_t, custom_props::tracing> ex5 = pool.executor();
+  auto ex6 = std::require(ex5, custom_props::tracing{true});
+  assert(std::query(ex6, custom_props::tracing{}));
   ex6.execute([]{ std::cout << "and again\n"; });
 
-  static_assert(!execution::can_prefer_v<decltype(ex5), custom_props::tracing>, "cannot prefer");
+  static_assert(!std::can_prefer_v<decltype(ex5), custom_props::tracing>, "cannot prefer");
 
   pool.wait();
 }

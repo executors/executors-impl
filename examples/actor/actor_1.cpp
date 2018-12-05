@@ -91,7 +91,7 @@ public:
   friend void send(Message msg, actor_address from, actor_address to)
   {
     // Execute the message handler in the context of the target's executor.
-    std::execution::require(to->executor_,
+    std::require(to->executor_,
       std::execution::blocking.never).execute(
         [=, msg=std::move(msg)]() mutable
         {
@@ -139,8 +139,8 @@ protected:
   void tail_send(Message msg, actor_address to)
   {
     // Execute the message handler in the context of the target's executor.
-    std::execution::prefer(
-      std::execution::require(to->executor_,
+    std::prefer(
+      std::require(to->executor_,
         std::execution::blocking.never),
           std::execution::relationship.continuation).execute(
             [=, msg=std::move(msg), from=this]() mutable
