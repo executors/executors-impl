@@ -17,7 +17,7 @@ struct eval
 template<class Executor>
 struct eval<Executor, std::void_t<typename Executor::index_type>>
 {
-  using type = typename decltype(std::require(std::declval<const Executor&>(), execution::bulk_oneway))::index_type;
+  using type = typename decltype(std::require_concept(std::declval<const Executor&>(), execution::bulk_oneway))::index_type;
 };
 
 } // namespace executor_index_impl

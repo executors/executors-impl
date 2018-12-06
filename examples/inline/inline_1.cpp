@@ -28,6 +28,6 @@ static_assert(execution::is_oneway_executor_v<inline_executor>, "one way executo
 int main()
 {
   inline_executor ex;
-  auto ex2 = std::require(ex, execution::oneway);
+  auto ex2 = std::require_concept(ex, execution::oneway);
   ex2.execute([]{ std::cout << "we made it\n"; });
 }

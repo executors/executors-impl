@@ -33,6 +33,7 @@ void oneway_executor_compile_test()
 
   oneway_executor ex1;
   oneway_executor ex2(nullptr);
+  ex2.require_concept(execution::oneway);
 
   const oneway_executor& cex1 = ex1;
   const oneway_executor& cex2 = ex2;
@@ -63,9 +64,9 @@ void oneway_executor_compile_test()
 
   ex1.assign(pool.executor());
 
-  bulk_oneway_executor ex8 = std::require(cex1, execution::bulk_oneway);
+  bulk_oneway_executor ex8 = std::require_concept(cex1, execution::bulk_oneway);
 
-  ex1 = std::require(cex1, execution::oneway);
+  ex1 = std::require_concept(cex1, execution::oneway);
   ex1 = std::require(cex1, execution::mapping.thread);
   ex1 = std::require(cex1, execution::blocking.never);
   ex1 = std::require(cex1, execution::blocking.possibly);
@@ -160,9 +161,9 @@ void bulk_oneway_executor_compile_test()
 
   ex1.assign(pool.executor());
 
-  oneway_executor ex8 = std::require(cex1, execution::oneway);
+  oneway_executor ex8 = std::require_concept(cex1, execution::oneway);
 
-  ex1 = std::require(cex1, execution::bulk_oneway);
+  ex1 = std::require_concept(cex1, execution::bulk_oneway);
   ex1 = std::require(cex1, execution::mapping.thread);
   ex1 = std::require(cex1, execution::blocking.never);
   ex1 = std::require(cex1, execution::blocking.possibly);

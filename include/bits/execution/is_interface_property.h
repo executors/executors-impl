@@ -14,12 +14,12 @@ template<class T>
 struct eval<T,
   std::void_t<
     typename T::template polymorphic_executor_type<>
-	>> : std::true_type {};
+	>> : std::integral_constant<bool, T::is_requirable_concept> {};
 
 } // namespace is_interface_property_impl
 
-template<class Executor>
-struct is_interface_property : is_interface_property_impl::eval<Executor> {};
+template<class T>
+struct is_interface_property : is_interface_property_impl::eval<T> {};
 
 } // namespace execution
 } // namespace std

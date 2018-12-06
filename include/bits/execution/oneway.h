@@ -12,7 +12,8 @@ struct oneway_t
   template<class Executor>
     static constexpr bool is_applicable_v = is_executor_impl::eval<Executor>::value;
 
-  static constexpr bool is_requirable = true;
+  static constexpr bool is_requirable_concept = true;
+  static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type = bool;

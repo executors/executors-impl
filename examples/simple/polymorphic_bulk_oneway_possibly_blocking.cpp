@@ -10,7 +10,9 @@ using executor = execution::executor<
 int main()
 {
   static_thread_pool pool{1};
-  executor ex = std::require(pool.executor(), execution::bulk_oneway, execution::blocking.possibly);
+  executor ex = std::require(
+      std::require_concept(pool.executor(), execution::bulk_oneway),
+      execution::blocking.possibly);
   ex.bulk_execute([](int n, int&){ std::cout << "part " << n << "\n"; }, 8, []{ return 0; });
   pool.wait();
 }

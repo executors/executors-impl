@@ -83,9 +83,10 @@ struct is_valid_target<Executor> : std::true_type {};
 template<class Executor, class Head, class... Tail>
 struct is_valid_target<Executor, Head, Tail...>
   : std::integral_constant<bool,
-      (!Head::is_requirable || can_require_v<Executor, Head>)
+      (!Head::is_requirable_concept || can_require_concept_v<Executor, Head>)
+      && (!Head::is_requirable || can_require_v<Executor, Head>)
       && (!Head::is_preferable || can_prefer_v<Executor, Head>)
-      && (Head::is_requirable || Head::is_preferable || can_query_v<Executor, Head>)
+      && (Head::is_requirable_concept || Head::is_requirable || Head::is_preferable || can_query_v<Executor, Head>)
       && is_valid_target<Executor, Tail...>::value> {};
 
 template<class Executor, class... SupportableProperties>
@@ -141,7 +142,7 @@ struct impl_base
   virtual const void* target() const = 0;
   virtual bool equals(const impl_base* e) const noexcept = 0;
   virtual impl_base* require(const type_info&, const void* p) const = 0;
-  virtual void* require_interface(const type_info&, const void* p) const = 0;
+  virtual void* require_concept(const type_info&, const void* p) const = 0;
   virtual impl_base* prefer(const type_info&, const void* p) const = 0;
   virtual void* query(const type_info&, const void* p) const = 0;
 };
@@ -226,35 +227,35 @@ struct impl : impl_base
     return this->require_helper(property_list<SupportableProperties...>{}, t, p);
   }
 
-  void* require_interface_helper(property_list<>, const type_info&, const void*) const
+  void* require_concept_helper(property_list<>, const type_info&, const void*) const
   {
     assert(0);
     return nullptr;
   }
 
   template<class Head, class... Tail>
-  void* require_interface_helper(property_list<Head, Tail...>, const type_info& t, const void* p,
-    typename std::enable_if<Head::is_requirable && is_interface_property<Head>::value>::type* = 0) const
+  void* require_concept_helper(property_list<Head, Tail...>, const type_info& t, const void* p,
+    typename std::enable_if<is_interface_property<Head>::value>::type* = 0) const
   {
     if (t == typeid(Head))
     {
       return new typename Head::template polymorphic_executor_type<>(
         typename Head::template polymorphic_executor_type<SupportableProperties...>(
-          std::require(executor_, *static_cast<const Head*>(p))));
+          std::require_concept(executor_, *static_cast<const Head*>(p))));
     }
-    return require_interface_helper(property_list<Tail...>{}, t, p);
+    return require_concept_helper(property_list<Tail...>{}, t, p);
   }
 
   template<class Head, class... Tail>
-  void* require_interface_helper(property_list<Head, Tail...>, const type_info& t, const void* p,
-    typename std::enable_if<!Head::is_requirable || !is_interface_property<Head>::value>::type* = 0) const
+  void* require_concept_helper(property_list<Head, Tail...>, const type_info& t, const void* p,
+    typename std::enable_if<!is_interface_property<Head>::value>::type* = 0) const
   {
-    return require_interface_helper(property_list<Tail...>{}, t, p);
+    return require_concept_helper(property_list<Tail...>{}, t, p);
   }
 
-  virtual void* require_interface(const type_info& t, const void* p) const
+  virtual void* require_concept(const type_info& t, const void* p) const
   {
-    return this->require_interface_helper(property_list<SupportableProperties...>{}, t, p);
+    return this->require_concept_helper(property_list<SupportableProperties...>{}, t, p);
   }
 
   impl_base* prefer_helper(property_list<>, const type_info&, const void*) const
@@ -345,7 +346,7 @@ public:
         typename std::enable_if<!std::is_same<Executor, polymorphic_executor_type>::value, Executor>::type,
           SupportableProperties...>>::type* = 0)
   {
-    auto e2 = std::require(std::move(e), oneway);
+    auto e2 = std::require_concept(std::move(e), oneway);
     impl_ = new oneway_executor_impl::impl<decltype(e2), SupportableProperties...>(std::move(e2));
   }
 
@@ -415,15 +416,15 @@ public:
 
   template<class Property,
     class = typename std::enable_if<
-      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable_concept
         && is_interface_property<Property>::value>::type>
-  typename Property::template polymorphic_executor_type<SupportableProperties...> require(const Property& p) const
+  typename Property::template polymorphic_executor_type<SupportableProperties...> require_concept(const Property& p) const
   {
     oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...> p1(p);
     if (!impl_) throw bad_executor();
     return std::unique_ptr<typename Property::template polymorphic_executor_type<>>(
         static_cast<typename Property::template polymorphic_executor_type<>*>(
-          impl_->require_interface(typeid(p1), &p1)))->template downcast<SupportableProperties...>();
+          impl_->require_concept(typeid(p1), &p1)))->template downcast<SupportableProperties...>();
   }
 
   template<class Property,

@@ -4,6 +4,7 @@
 #include <bits/properties/query_member_traits.h>
 #include <bits/properties/query_static_member_traits.h>
 #include <bits/properties/require_member_traits.h>
+#include <bits/properties/require_concept_member_traits.h>
 
 namespace std {
 namespace execution {
@@ -16,6 +17,14 @@ public:
   adapter(Executor ex)
     : executor_(std::move(ex))
   {
+  }
+
+  template<class Property>
+  constexpr auto require_concept(const Property& p) const
+    noexcept(std::impl::require_concept_member_traits<Executor, Property>::is_noexcept)
+    -> Derived<typename std::impl::require_concept_member_traits<Executor, Property>::result_type>
+  {
+    return Derived<decltype(executor_.require_concept(p))>(executor_.require_concept(p));
   }
 
   template<class Property>

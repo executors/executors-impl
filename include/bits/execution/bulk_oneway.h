@@ -15,7 +15,8 @@ struct bulk_oneway_t
   template<class Executor>
     static constexpr bool is_applicable_v = is_executor_impl::eval<Executor>::value;
 
-  static constexpr bool is_requirable = true;
+  static constexpr bool is_requirable_concept = true;
+  static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
 
   using polymorphic_query_result_type = bool;
@@ -37,7 +38,7 @@ private:
     using impl::adapter<adapter, Executor>::adapter;
     using impl::adapter<adapter, Executor>::require;
 
-    Executor require(oneway_t) const noexcept
+    Executor require_concept(oneway_t) const noexcept
     {
       return this->executor_;
     }
@@ -64,7 +65,7 @@ public:
         is_oneway_executor<Executor>::value && !is_bulk_oneway_executor<Executor>::value,
         adapter<Executor>
       >>
-  friend adapter<Executor> require(Executor ex, bulk_oneway_t)
+  friend adapter<Executor> require_concept(Executor ex, bulk_oneway_t)
   {
     return adapter<Executor>(std::move(ex));
   }

@@ -135,10 +135,10 @@ void static_thread_pool_compile_test()
   executor_type ex1(pool1.executor());
 
   static_thread_pool_oneway_executor_compile_test(pool1.executor());
-  static_thread_pool_oneway_executor_compile_test(std::require(pool1.executor(), execution::oneway));
-  static_thread_pool_oneway_executor_compile_test(std::require(pool1.executor(), execution::bulk_oneway, execution::oneway));
-  static_thread_pool_bulk_oneway_executor_compile_test(std::require(pool1.executor(), execution::bulk_oneway));
-  static_thread_pool_bulk_oneway_executor_compile_test(std::require(pool1.executor(), execution::bulk_oneway, execution::oneway, execution::bulk_oneway));
+  static_thread_pool_oneway_executor_compile_test(std::require_concept(pool1.executor(), execution::oneway));
+  static_thread_pool_oneway_executor_compile_test(std::require_concept(std::require_concept(pool1.executor(), execution::bulk_oneway), execution::oneway));
+  static_thread_pool_bulk_oneway_executor_compile_test(std::require_concept(pool1.executor(), execution::bulk_oneway));
+  static_thread_pool_bulk_oneway_executor_compile_test(std::require_concept(std::require_concept(std::require_concept(pool1.executor(), execution::bulk_oneway), execution::oneway), execution::bulk_oneway));
 }
 
 int main()

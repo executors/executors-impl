@@ -39,9 +39,9 @@ class static_thread_pool
 
     // Interface.
     executor_impl<execution::oneway_t, Blocking, Continuation, Work, ProtoAllocator>
-      require(execution::oneway_t) const { return {pool_, allocator_}; }
+      require_concept(execution::oneway_t) const { return {pool_, allocator_}; }
     executor_impl<execution::bulk_oneway_t, Blocking, Continuation, Work, ProtoAllocator>
-      require(execution::bulk_oneway_t) const { return {pool_, allocator_}; }
+      require_concept(execution::bulk_oneway_t) const { return {pool_, allocator_}; }
 
     // Blocking modes.
     executor_impl<Interface, execution::blocking_t::never_t, Continuation, Work, ProtoAllocator>

@@ -14,6 +14,7 @@ namespace custom_props {
     template<class>
       static constexpr bool is_applicable_v = true;
 
+    static constexpr bool is_requirable_concept = false;
     static constexpr bool is_requirable = true;
     static constexpr bool is_preferable = true;
     using polymorphic_query_result_type = int;
@@ -158,7 +159,7 @@ private:
 int main()
 {
   priority_scheduler sched;
-  auto ex = std::require(sched.executor(), execution::oneway);
+  auto ex = std::require_concept(sched.executor(), execution::oneway);
   auto prefer_low = std::prefer(ex, custom_props::low_priority);
   auto low = std::require(ex, custom_props::low_priority);
   auto med = std::require(ex, custom_props::normal_priority);

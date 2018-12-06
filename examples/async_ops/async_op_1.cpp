@@ -15,8 +15,8 @@ void my_twoway_operation_1(const TaskExecutor& tex, int n,
   {
     // Nothing to do. Operation finishes immediately.
     // Specify non-blocking to prevent stack overflow.
-    std::require(cex,
-        execution::oneway,
+    std::require(
+        std::require_concept(cex, execution::oneway),
         execution::blocking.never
       ).execute(
         [h = std::move(h), n]() mutable
@@ -27,15 +27,16 @@ void my_twoway_operation_1(const TaskExecutor& tex, int n,
   else
   {
     // Simulate an asynchronous operation.
-    std::require(tex,
-        execution::oneway,
+    std::require(
+        std::require_concept(tex, execution::oneway),
         execution::blocking.never
       ).execute(
         [n, cex = std::prefer(cex, execution::outstanding_work.tracked), h = std::move(h)]() mutable
         {
           int result = n * 2;
           std::this_thread::sleep_for(std::chrono::seconds(1)); // Simulate long running work.
-          std::prefer(std::require(cex, execution::oneway),
+          std::prefer(
+              std::require_concept(cex, execution::oneway),
               execution::blocking.possibly
             ).execute(
               [h = std::move(h), result]() mutable

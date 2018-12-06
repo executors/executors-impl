@@ -1,6 +1,7 @@
 #ifndef STD_PROPERTIES_INCLUDED
 #define STD_PROPERTIES_INCLUDED
 
+#include <bits/properties/require_concept.h>
 #include <bits/properties/require.h>
 #include <bits/properties/prefer.h>
 #include <bits/properties/query.h>
@@ -9,6 +10,9 @@ namespace std {
 
 namespace
 {
+  // Require concept customization point.
+  constexpr const auto& require_concept = require_concept_impl::customization_point<>;
+
   // Require customization point.
   constexpr const auto& require = require_impl::customization_point<>;
 
@@ -18,6 +22,12 @@ namespace
   // Query customization point.
   constexpr const auto& query = query_impl::customization_point<>;
 }
+
+// Type trait to determine whether the require_concept customization point is valid for the specified arguments.
+template<class Entity, class Property> struct can_require_concept;
+
+template<class Entity, class Property>
+  constexpr bool can_require_concept_v = can_require_concept<Entity, Property>::value;
 
 // Type trait to determine whether the require customization point is valid for the specified arguments.
 template<class Entity, class... Properties> struct can_require;
@@ -41,6 +51,7 @@ template<class InnerProperty> struct prefer_only;
 
 } // namespace std
 
+#include <bits/properties/can_require_concept.h>
 #include <bits/properties/can_require.h>
 #include <bits/properties/can_prefer.h>
 #include <bits/properties/can_query.h>

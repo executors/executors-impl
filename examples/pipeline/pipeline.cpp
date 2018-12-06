@@ -265,7 +265,7 @@ std::future<void> pipeline(queue_back<T> in, F f)
         f(in);
       });
   std::future<void> fut = task.get_future();
-  std::require(ex, execution::oneway).execute(std::move(task));
+  std::require_concept(ex, execution::oneway).execute(std::move(task));
   return fut;
 }
 
@@ -285,7 +285,7 @@ std::future<void> pipeline(queue_back<T> in, F f, Tail... t)
   auto ex = get_associated_executor(f, new_thread_executor());
 
   // Run the function.
-  std::require(ex,
+  std::require_concept(ex,
       execution::oneway
     ).execute(
       [in, out, f = std::move(f)]() mutable
@@ -314,7 +314,7 @@ std::future<void> pipeline(F f, Tail... t)
   auto ex = get_associated_executor(f, new_thread_executor());
 
   // Run the function.
-  std::require(ex,
+  std::require_concept(ex,
       execution::oneway
     ).execute(
       [out, f = std::move(f)]() mutable
