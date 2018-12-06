@@ -11,6 +11,9 @@ namespace custom_props {
 
   struct priority
   {
+    template<class>
+      static constexpr bool is_applicable_v = true;
+
     static constexpr bool is_requirable = true;
     static constexpr bool is_preferable = true;
     using polymorphic_query_result_type = int;

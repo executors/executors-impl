@@ -1,6 +1,7 @@
 #ifndef STD_BITS_EXECUTION_ONEWAY_H_INCLUDED
 #define STD_BITS_EXECUTION_ONEWAY_H_INCLUDED
 
+#include <bits/execution/is_executor.h>
 #include <bits/execution/is_oneway_executor.h>
 
 namespace std {
@@ -8,6 +9,9 @@ namespace execution {
 
 struct oneway_t
 {
+  template<class Executor>
+    static constexpr bool is_applicable_v = is_executor_impl::eval<Executor>::value;
+
   static constexpr bool is_requirable = true;
   static constexpr bool is_preferable = false;
 

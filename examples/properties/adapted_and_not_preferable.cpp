@@ -9,6 +9,10 @@ namespace custom_props
 {
   struct tracing
   {
+    template<class Executor>
+      static constexpr bool is_applicable_v =
+        std::execution::is_oneway_executor_v<Executor>;
+
     static constexpr bool is_requirable = true;
     static constexpr bool is_preferable = false;
     using polymorphic_query_result_type = bool;
