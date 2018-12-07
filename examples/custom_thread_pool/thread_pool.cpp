@@ -50,6 +50,38 @@ inline constexpr preallocated_oneway_t preallocated_oneway;
 
 //------------------------------------------------------------------------------
 
+template <class Function>
+struct allocated_size_of_t
+{
+  template<class Executor> static constexpr bool is_applicable_v = true;
+  static constexpr bool is_requirable_concept = false;
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type = std::size_t;
+};
+
+template <class Function>
+inline constexpr allocated_size_of_t<Function> allocated_size_of;
+
+//------------------------------------------------------------------------------
+
+template <class Function>
+struct alignment_of_t
+{
+  template<class Executor> static constexpr bool is_applicable_v = true;
+  static constexpr bool is_requirable_concept = false;
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type = std::size_t;
+};
+
+template <class Function>
+inline constexpr alignment_of_t<Function> alignment_of;
+
+//------------------------------------------------------------------------------
+
 class thread_pool
 {
 public:
@@ -160,6 +192,18 @@ public:
     oneway_executor<> require_concept(const std::execution::oneway_t&) const
     {
       return {pool_};
+    }
+
+    template <class Function>
+    static constexpr std::size_t query(const allocated_size_of_t<Function>&) noexcept
+    {
+      return sizeof(function_with_preallocated_memory<Function>);
+    }
+
+    template <class Function>
+    static constexpr std::size_t query(const alignment_of_t<Function>&) noexcept
+    {
+      return alignof(function_with_preallocated_memory<Function>);
     }
 
   private:
@@ -373,4 +417,22 @@ int main()
       std::this_thread::sleep_for(std::chrono::seconds(1));
       std::cout << "7: after sleep\n";
     });
+
+  struct my_function
+  {
+    char big[4096];
+
+    void operator()()
+    {
+      std::cout << "8: before sleep\n";
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::cout << "8: after sleep\n";
+    }
+  };
+
+  auto ex8 = std::require_concept(ex7, preallocated_oneway);
+  constexpr std::size_t preallocated_size = std::query(ex8, allocated_size_of<my_function>);
+  constexpr std::size_t preallocated_align = std::query(ex8, alignment_of<my_function>);
+  alignas(preallocated_align) static unsigned char mem3[preallocated_size];
+  ex8.execute(my_function{}, mem3, preallocated_size);
 }
