@@ -36,10 +36,6 @@ struct prefer_only : prefer_only_impl::prefer_only_base<InnerProperty>
 {
   InnerProperty property;
 
-  template<class Entity>
-    static constexpr bool is_applicable_v =
-      InnerProperty::template is_applicable_v<Entity>;
-
   static constexpr bool is_requirable_concept = false;
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = InnerProperty::is_preferable;

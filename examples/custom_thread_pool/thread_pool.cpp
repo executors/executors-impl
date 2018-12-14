@@ -34,7 +34,6 @@ struct is_preallocated_oneway_executor<Executor,
 
 struct preallocated_oneway_t
 {
-  template<class Executor> static constexpr bool is_applicable_v = true;
   static constexpr bool is_requirable_concept = true;
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
@@ -55,7 +54,6 @@ inline constexpr preallocated_oneway_t preallocated_oneway;
 template <class Function>
 struct allocated_size_of_t
 {
-  template<class Executor> static constexpr bool is_applicable_v = true;
   static constexpr bool is_requirable_concept = false;
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
@@ -71,7 +69,6 @@ inline constexpr allocated_size_of_t<Function> allocated_size_of;
 template <class Function>
 struct alignment_of_t
 {
-  template<class Executor> static constexpr bool is_applicable_v = true;
   static constexpr bool is_requirable_concept = false;
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;
@@ -102,7 +99,6 @@ struct is_intrusive_oneway_executor<Executor,
 
 struct intrusive_oneway_t
 {
-  template<class Executor> static constexpr bool is_applicable_v = true;
   static constexpr bool is_requirable_concept = true;
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;

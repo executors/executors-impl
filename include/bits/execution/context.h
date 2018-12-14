@@ -10,9 +10,6 @@ namespace context_impl {
 template<class Derived>
 struct property_base
 {
-  template<class Executor>
-    static constexpr bool is_applicable_v = is_executor_impl::eval<Executor>::value;
-
   static constexpr bool is_requirable_concept = false;
   static constexpr bool is_requirable = false;
   static constexpr bool is_preferable = false;

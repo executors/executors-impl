@@ -14,8 +14,7 @@ struct require_fn
   template<class Entity, class Property>
   constexpr auto operator()(Entity&& ex, Property&&) const
     -> std::enable_if_t<
-      std::decay_t<Property>::template is_applicable_v<std::decay_t<Entity>>
-        && std::decay_t<Property>::is_requirable
+      std::decay_t<Property>::is_requirable
         && impl::require_static_traits<Entity, Property>::is_valid,
       typename impl::require_static_traits<Entity, Property>::result_type
     >
@@ -27,8 +26,7 @@ struct require_fn
   constexpr auto operator()(Entity&& ex, Property&& p) const
     noexcept(impl::require_member_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
-      std::decay_t<Property>::template is_applicable_v<std::decay_t<Entity>>
-        && std::decay_t<Property>::is_requirable
+      std::decay_t<Property>::is_requirable
         && !impl::require_static_traits<Entity, Property>::is_valid
         && impl::require_member_traits<Entity, Property>::is_valid,
       typename impl::require_member_traits<Entity, Property>::result_type
@@ -41,8 +39,7 @@ struct require_fn
   constexpr auto operator()(Entity&& ex, Property&& p) const
     noexcept(impl::require_free_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
-      std::decay_t<Property>::template is_applicable_v<std::decay_t<Entity>>
-        && std::decay_t<Property>::is_requirable
+      std::decay_t<Property>::is_requirable
         && !impl::require_static_traits<Entity, Property>::is_valid
         && !impl::require_member_traits<Entity, Property>::is_valid
         && impl::require_free_traits<Entity, Property>::is_valid,

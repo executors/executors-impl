@@ -14,8 +14,7 @@ struct query_fn
   template<class Entity, class Property>
   constexpr auto operator()(Entity&&, Property&&) const
     -> std::enable_if_t<
-      std::decay_t<Property>::template is_applicable_v<std::decay_t<Entity>>
-        && impl::query_static_traits<Entity, Property>::is_valid,
+      impl::query_static_traits<Entity, Property>::is_valid,
       typename impl::query_static_traits<Entity, Property>::result_type
     >
   {
@@ -26,8 +25,7 @@ struct query_fn
   constexpr auto operator()(Entity&& ex, Property&& p) const
     noexcept(impl::query_member_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
-      std::decay_t<Property>::template is_applicable_v<std::decay_t<Entity>>
-        && !impl::query_static_traits<Entity, Property>::is_valid
+      !impl::query_static_traits<Entity, Property>::is_valid
         && impl::query_member_traits<Entity, Property>::is_valid,
       typename impl::query_member_traits<Entity, Property>::result_type
     >
@@ -39,8 +37,7 @@ struct query_fn
   constexpr auto operator()(Entity&& ex, Property&& p) const
     noexcept(impl::query_free_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
-      std::decay_t<Property>::template is_applicable_v<std::decay_t<Entity>>
-        && !impl::query_static_traits<Entity, Property>::is_valid
+      !impl::query_static_traits<Entity, Property>::is_valid
         && !impl::query_member_traits<Entity, Property>::is_valid
         && impl::query_free_traits<Entity, Property>::is_valid,
       typename impl::query_free_traits<Entity, Property>::result_type

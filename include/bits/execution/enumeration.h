@@ -70,9 +70,6 @@ struct enumeration
       non_default_enumerator<enumerator<Value> >
     >
   {
-    template<class Executor>
-      static constexpr bool is_applicable_v = is_executor_impl::eval<Executor>::value;
-
     static constexpr bool is_requirable_concept = false;
     static constexpr bool is_requirable = true;
     static constexpr bool is_preferable = true;
@@ -98,9 +95,6 @@ struct enumeration
       return Derived(Value);
     }
   };
-
-  template<class Executor>
-    static constexpr bool is_applicable_v = is_executor_impl::eval<Executor>::value;
 
   static constexpr bool is_requirable_concept = false;
   static constexpr bool is_requirable = false;
