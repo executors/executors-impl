@@ -13,6 +13,8 @@ struct nullary_function
   void operator()() {};
 };
 
+//------------------------------------------------------------------------------
+
 template <class Executor, class = std::void_t<>>
 struct is_preallocated_oneway_executor
   : std::false_type
@@ -82,6 +84,42 @@ inline constexpr alignment_of_t<Function> alignment_of;
 
 //------------------------------------------------------------------------------
 
+template <class Executor, class = std::void_t<>>
+struct is_intrusive_oneway_executor
+  : std::false_type
+{
+};
+
+template <class Executor>
+struct is_intrusive_oneway_executor<Executor,
+  std::void_t<decltype(
+    std::declval<const Executor&>().submit(
+      std::declval<std::add_lvalue_reference_t<std::decay_t<decltype(
+        std::declval<const Executor&>().package(nullary_function()))>>>()))>>
+  : std::true_type
+{
+};
+
+struct intrusive_oneway_t
+{
+  template<class Executor> static constexpr bool is_applicable_v = true;
+  static constexpr bool is_requirable_concept = true;
+  static constexpr bool is_requirable = false;
+  static constexpr bool is_preferable = false;
+
+  using polymorphic_query_result_type = bool;
+
+  template<class Executor>
+    static constexpr bool static_query_v
+      = is_intrusive_oneway_executor<Executor>::value;
+
+  static constexpr bool value() { return true; }
+};
+
+inline constexpr intrusive_oneway_t intrusive_oneway;
+
+//------------------------------------------------------------------------------
+
 class thread_pool
 {
 public:
@@ -92,6 +130,11 @@ public:
   }
 
   ~thread_pool()
+  {
+    wait();
+  }
+
+  void wait()
   {
     std::unique_lock<std::mutex> lock(mutex_);
     std::list<std::thread> threads(std::move(threads_));
@@ -106,6 +149,7 @@ public:
   }
 
   class preallocated_oneway_executor;
+  class intrusive_oneway_executor;
 
   template <class ProtoAllocator = std::allocator<void>>
   class oneway_executor
@@ -130,6 +174,11 @@ public:
     }
 
     preallocated_oneway_executor require_concept(const preallocated_oneway_t&) const
+    {
+      return {pool_};
+    }
+
+    intrusive_oneway_executor require_concept(const intrusive_oneway_t&) const
     {
       return {pool_};
     }
@@ -194,6 +243,11 @@ public:
       return {pool_};
     }
 
+    intrusive_oneway_executor require_concept(const intrusive_oneway_t&) const
+    {
+      return {pool_};
+    }
+
     template <class Function>
     static constexpr std::size_t query(const allocated_size_of_t<Function>&) noexcept
     {
@@ -210,6 +264,58 @@ public:
     friend class thread_pool;
 
     preallocated_oneway_executor(thread_pool& owner)
+      : pool_(owner)
+    {
+    }
+
+    thread_pool& pool_;
+  };
+
+private:
+  template <class Function> struct function_with_intrusive_memory;
+
+public:
+  class intrusive_oneway_executor
+  {
+  public:
+    intrusive_oneway_executor(const intrusive_oneway_executor& other) noexcept = default;
+
+    template <class Function>
+    function_with_intrusive_memory<Function> package(Function f) const
+    {
+      return function_with_intrusive_memory<Function>(std::move(f));
+    }
+
+    template <class Function>
+    void submit(function_with_intrusive_memory<Function>& f) const
+    {
+      pool_.add(&f);
+    }
+
+    bool operator==(const intrusive_oneway_executor& other) const noexcept
+    {
+      return &pool_ == &other.pool_;
+    }
+
+    bool operator!=(const intrusive_oneway_executor& other) const noexcept
+    {
+      return &pool_ != &other.pool_;
+    }
+
+    oneway_executor<> require_concept(const std::execution::oneway_t&) const
+    {
+      return {pool_};
+    }
+
+    preallocated_oneway_executor require_concept(const preallocated_oneway_t&) const
+    {
+      return {pool_};
+    }
+
+  private:
+    friend class thread_pool;
+
+    intrusive_oneway_executor(thread_pool& owner)
       : pool_(owner)
     {
     }
@@ -341,6 +447,27 @@ private:
     Function func_;
   };
 
+  template <class Function>
+  struct function_with_intrusive_memory : function
+  {
+    explicit function_with_intrusive_memory(Function f)
+      : func_(std::move(f))
+    {
+    }
+
+    void call(void*) final override
+    {
+      Function f(std::move(func_));
+      [&f]() noexcept { f(); }();
+    }
+
+    void destroy() final override
+    {
+    }
+
+    Function func_;
+  };
+
   std::mutex mutex_;
   std::condition_variable condition_;
   std::list<std::thread> threads_;
@@ -351,8 +478,13 @@ private:
 
 static_assert(std::execution::is_oneway_executor_v<thread_pool::executor_type>);
 static_assert(!std::execution::is_oneway_executor_v<thread_pool::preallocated_oneway_executor>);
+static_assert(!std::execution::is_oneway_executor_v<thread_pool::intrusive_oneway_executor>);
 static_assert(!is_preallocated_oneway_executor<thread_pool::executor_type>::value);
 static_assert(is_preallocated_oneway_executor<thread_pool::preallocated_oneway_executor>::value);
+static_assert(!is_preallocated_oneway_executor<thread_pool::intrusive_oneway_executor>::value);
+static_assert(!is_intrusive_oneway_executor<thread_pool::executor_type>::value);
+static_assert(!is_intrusive_oneway_executor<thread_pool::preallocated_oneway_executor>::value);
+static_assert(is_intrusive_oneway_executor<thread_pool::intrusive_oneway_executor>::value);
 
 //------------------------------------------------------------------------------
 
@@ -435,4 +567,15 @@ int main()
   constexpr std::size_t preallocated_align = std::query(ex8, alignment_of<my_function>);
   alignas(preallocated_align) static unsigned char mem3[preallocated_size];
   ex8.execute(my_function{}, mem3, preallocated_size);
+
+  auto ex9 = std::require_concept(tp.executor(), intrusive_oneway);
+  auto package = ex9.package(
+    []{
+      std::cout << "9: before sleep\n";
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::cout << "9: after sleep\n";
+    });
+  ex9.submit(package);
+
+  tp.wait();
 }
