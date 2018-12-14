@@ -449,7 +449,8 @@ public:
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable_concept
+        || oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         || oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
       typename oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
@@ -464,7 +465,8 @@ public:
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      !oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      !oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable_concept
+        && !oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         && !oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
       typename oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {

@@ -450,7 +450,8 @@ public:
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable_concept
+        || bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         || bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
       typename bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
@@ -465,7 +466,8 @@ public:
   template<class Property>
   auto query(const Property& p) const
     -> typename std::enable_if<
-      !bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
+      !bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable_concept
+        && !bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable
         && !bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_preferable,
       typename bulk_oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::polymorphic_query_result_type>::type
   {
