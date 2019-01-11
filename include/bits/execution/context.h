@@ -27,6 +27,12 @@ struct context_t : context_impl::property_base<context_t> {};
 constexpr context_t context;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::context_t,
+  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_CONTEXT_H_INCLUDED

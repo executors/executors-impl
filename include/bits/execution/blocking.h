@@ -88,6 +88,12 @@ inline constexpr blocking_t::always_t blocking_t::always;
 inline constexpr blocking_t::never_t blocking_t::never;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::blocking_t,
+  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_BLOCKING_H_INCLUDED

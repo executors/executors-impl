@@ -71,6 +71,11 @@ public:
 constexpr bulk_oneway_t bulk_oneway;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::bulk_oneway_t>
+  : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_BULK_ONEWAY_H_INCLUDED

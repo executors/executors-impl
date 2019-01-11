@@ -28,6 +28,11 @@ struct oneway_t
 constexpr oneway_t oneway;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::oneway_t>
+  : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_ONEWAY_H_INCLUDED

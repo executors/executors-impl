@@ -70,6 +70,10 @@ struct prefer_only : prefer_only_impl::prefer_only_base<InnerProperty>
   }
 };
 
+template<class Entity, class InnerProperty>
+struct is_applicable_property<Entity, prefer_only<InnerProperty>>
+  : std::is_applicable_property<Entity, InnerProperty> {};
+
 } // namespace std
 
 #endif // STD_BITS_PROPERTIES_PREFER_ONLY_H_INCLUDED

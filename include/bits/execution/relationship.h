@@ -23,6 +23,12 @@ inline constexpr relationship_t::fork_t relationship_t::fork;
 inline constexpr relationship_t::continuation_t relationship_t::continuation;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::relationship_t,
+  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_RELATIONSHIP_H_INCLUDED

@@ -49,6 +49,13 @@ struct preallocated_oneway_t
 
 inline constexpr preallocated_oneway_t preallocated_oneway;
 
+namespace std
+{
+  template<class Entity>
+  struct is_applicable_property<Entity, preallocated_oneway_t>
+    : std::true_type {};
+}
+
 //------------------------------------------------------------------------------
 
 template <class Function>
@@ -64,6 +71,14 @@ struct allocated_size_of_t
 template <class Function>
 inline constexpr allocated_size_of_t<Function> allocated_size_of;
 
+namespace std
+{
+  template<class Entity, class Function>
+  struct is_applicable_property<Entity, ::allocated_size_of_t<Function>,
+    std::enable_if_t<is_preallocated_oneway_executor<Entity>::value>>
+      : std::true_type {};
+}
+
 //------------------------------------------------------------------------------
 
 template <class Function>
@@ -78,6 +93,14 @@ struct alignment_of_t
 
 template <class Function>
 inline constexpr alignment_of_t<Function> alignment_of;
+
+namespace std
+{
+  template<class Entity, class Function>
+  struct is_applicable_property<Entity, ::alignment_of_t<Function>,
+    std::enable_if_t<is_preallocated_oneway_executor<Entity>::value>>
+      : std::true_type {};
+}
 
 //------------------------------------------------------------------------------
 
@@ -113,6 +136,13 @@ struct intrusive_oneway_t
 };
 
 inline constexpr intrusive_oneway_t intrusive_oneway;
+
+namespace std
+{
+  template<class Entity>
+  struct is_applicable_property<Entity, intrusive_oneway_t>
+    : std::true_type {};
+}
 
 //------------------------------------------------------------------------------
 

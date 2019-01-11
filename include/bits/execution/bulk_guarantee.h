@@ -26,6 +26,12 @@ inline constexpr bulk_guarantee_t::sequenced_t bulk_guarantee_t::sequenced;
 inline constexpr bulk_guarantee_t::parallel_t bulk_guarantee_t::parallel;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::bulk_guarantee_t,
+  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_BULK_GUARANTEE_H_INCLUDED

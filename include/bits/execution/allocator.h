@@ -41,6 +41,12 @@ struct allocator_t<void> : allocator_impl::property_base<allocator_t<void>>
 constexpr allocator_t<void> allocator;
 
 } // namespace execution
+
+template<class Entity, class T>
+struct is_applicable_property<Entity, execution::allocator_t<T>,
+  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_ALLOCATOR_H_INCLUDED

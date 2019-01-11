@@ -1,6 +1,17 @@
 #ifndef STD_PROPERTIES_INCLUDED
 #define STD_PROPERTIES_INCLUDED
 
+namespace std {
+
+template<class Entity, class Property, class = void>
+  struct is_applicable_property;
+
+template<class Entity, class Property>
+  constexpr bool is_applicable_property_v = is_applicable_property<Entity, Property>::value;
+
+} // namespace std
+
+#include <bits/properties/is_applicable_property.h>
 #include <bits/properties/require_concept.h>
 #include <bits/properties/require.h>
 #include <bits/properties/prefer.h>

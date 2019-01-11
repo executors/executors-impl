@@ -26,6 +26,12 @@ inline constexpr mapping_t::new_thread_t mapping_t::new_thread;
 inline constexpr mapping_t::other_t mapping_t::other;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::mapping_t,
+  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_MAPPING_H_INCLUDED

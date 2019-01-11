@@ -22,6 +22,14 @@ namespace custom_props
   };
 };
 
+namespace std
+{
+  template<class Entity>
+  struct is_applicable_property<Entity, ::custom_props::tracing,
+    std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+      : std::true_type {};
+}
+
 class inline_executor
 {
 public:

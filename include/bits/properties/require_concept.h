@@ -14,7 +14,8 @@ struct require_concept_fn
   template<class Entity, class Property>
   constexpr auto operator()(Entity&& ex, Property&&) const
     -> std::enable_if_t<
-      std::decay_t<Property>::is_requirable_concept
+      std::is_applicable_property_v<std::decay_t<Entity>, std::decay_t<Property>>
+        && std::decay_t<Property>::is_requirable_concept
         && impl::require_concept_static_traits<Entity, Property>::is_valid,
       typename impl::require_concept_static_traits<Entity, Property>::result_type
     >
@@ -26,7 +27,8 @@ struct require_concept_fn
   constexpr auto operator()(Entity&& ex, Property&& p) const
     noexcept(impl::require_concept_member_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
-      std::decay_t<Property>::is_requirable_concept
+      std::is_applicable_property_v<std::decay_t<Entity>, std::decay_t<Property>>
+        && std::decay_t<Property>::is_requirable_concept
         && !impl::require_concept_static_traits<Entity, Property>::is_valid
         && impl::require_concept_member_traits<Entity, Property>::is_valid,
       typename impl::require_concept_member_traits<Entity, Property>::result_type
@@ -43,7 +45,8 @@ struct require_concept_fn
   constexpr auto operator()(Entity&& ex, Property&& p) const
     noexcept(impl::require_concept_free_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
-      std::decay_t<Property>::is_requirable_concept
+      std::is_applicable_property_v<std::decay_t<Entity>, std::decay_t<Property>>
+        && std::decay_t<Property>::is_requirable_concept
         && !impl::require_concept_static_traits<Entity, Property>::is_valid
         && !impl::require_concept_member_traits<Entity, Property>::is_valid
         && impl::require_concept_free_traits<Entity, Property>::is_valid,
