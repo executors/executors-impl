@@ -1,6 +1,7 @@
 #ifndef STD_BITS_PROPERTIES_REQUIRE_H_INCLUDED
 #define STD_BITS_PROPERTIES_REQUIRE_H_INCLUDED
 
+#include <bits/properties/can_query.h>
 #include <bits/properties/require_free_traits.h>
 #include <bits/properties/require_member_traits.h>
 #include <bits/properties/require_static_traits.h>
@@ -15,6 +16,7 @@ struct require_fn
   constexpr auto operator()(Entity&& ex, Property&&) const
     -> std::enable_if_t<
       std::decay_t<Property>::is_requirable
+        && can_query<std::decay_t<Entity>, std::decay_t<Property>>::value
         && impl::require_static_traits<Entity, Property>::is_valid,
       typename impl::require_static_traits<Entity, Property>::result_type
     >
@@ -27,6 +29,7 @@ struct require_fn
     noexcept(impl::require_member_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
       std::decay_t<Property>::is_requirable
+        && can_query<std::decay_t<Entity>, std::decay_t<Property>>::value
         && !impl::require_static_traits<Entity, Property>::is_valid
         && impl::require_member_traits<Entity, Property>::is_valid,
       typename impl::require_member_traits<Entity, Property>::result_type
@@ -40,6 +43,7 @@ struct require_fn
     noexcept(impl::require_free_traits<Entity, Property>::is_noexcept)
     -> std::enable_if_t<
       std::decay_t<Property>::is_requirable
+        && can_query<std::decay_t<Entity>, std::decay_t<Property>>::value
         && !impl::require_static_traits<Entity, Property>::is_valid
         && !impl::require_member_traits<Entity, Property>::is_valid
         && impl::require_free_traits<Entity, Property>::is_valid,

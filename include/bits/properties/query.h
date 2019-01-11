@@ -45,6 +45,19 @@ struct query_fn
   {
     return query(std::forward<Entity>(ex), std::forward<Property>(p));
   }
+
+  template<class Entity, class Property>
+  constexpr auto operator()(Entity&& ex, Property&& p) const
+    noexcept(impl::query_free_traits<Entity, Property>::is_noexcept)
+    -> std::enable_if_t<
+      !impl::query_static_traits<Entity, Property>::is_valid
+        && !impl::query_member_traits<Entity, Property>::is_valid
+        && !impl::query_free_traits<Entity, Property>::is_valid,
+      decltype(property_default_v<decay_t<Entity>, decay_t<Property>>)
+    >
+  {
+    return property_default_v<decay_t<Entity>, decay_t<Property>>;
+  }
 };
 
 template<class T = query_fn> constexpr T customization_point{};

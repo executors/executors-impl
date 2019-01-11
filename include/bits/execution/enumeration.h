@@ -200,6 +200,11 @@ private:
 
 } // namespace impl
 } // namespace execution
+
+template<class Entity, class Enumeration, int N, int I>
+struct property_default<Entity, execution::impl::enumerator_impl<Enumeration, N, I>>
+  : property_default<Entity, Enumeration> {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_ENUMERATION_H_INCLUDED
