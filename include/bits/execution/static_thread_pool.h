@@ -38,6 +38,7 @@ class static_thread_pool
     static_thread_pool& query(execution::context_t) const noexcept { return *pool_; }
 
     // Interface.
+    static constexpr Interface query(execution::executor_concept_t) { return {}; }
     executor_impl<execution::oneway_t, Blocking, Continuation, Work, ProtoAllocator>
       require_concept(execution::oneway_t) const { return {pool_, allocator_}; }
     executor_impl<execution::bulk_oneway_t, Blocking, Continuation, Work, ProtoAllocator>

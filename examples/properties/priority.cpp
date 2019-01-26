@@ -11,9 +11,6 @@ namespace custom_props {
 
   struct priority
   {
-    template<class>
-      static constexpr bool is_applicable_v = true;
-
     static constexpr bool is_requirable_concept = false;
     static constexpr bool is_requirable = true;
     static constexpr bool is_preferable = true;
@@ -34,7 +31,7 @@ namespace std
 {
   template<class Entity>
   struct is_applicable_property<Entity, ::custom_props::priority,
-    std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    std::enable_if_t<execution::is_executor_v<Entity>>>
       : std::true_type {};
 }
 
@@ -48,6 +45,11 @@ public:
     executor_type(priority_scheduler& ctx) noexcept
       : context_(ctx), priority_(custom_props::normal_priority.value())
     {
+    }
+
+    static constexpr auto query(execution::executor_concept_t)
+    {
+      return execution::oneway;
     }
 
     priority_scheduler& query(execution::context_t) const noexcept

@@ -35,6 +35,8 @@ private:
     using impl::adapter<adapter, Executor>::adapter;
     using impl::adapter<adapter, Executor>::require;
 
+    static constexpr bulk_oneway_t query(executor_concept_t) { return {}; }
+
     Executor require_concept(oneway_t) const noexcept
     {
       return this->executor_;
@@ -73,8 +75,8 @@ constexpr bulk_oneway_t bulk_oneway;
 } // namespace execution
 
 template<class Entity>
-struct is_applicable_property<Entity, execution::bulk_oneway_t>
-  : std::true_type {};
+struct is_applicable_property<Entity, execution::bulk_oneway_t,
+  std::enable_if_t<execution::is_executor_v<Entity>>> : std::true_type {};
 
 } // namespace std
 

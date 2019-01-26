@@ -26,7 +26,7 @@ inline constexpr relationship_t::continuation_t relationship_t::continuation;
 
 template<class Entity>
 struct is_applicable_property<Entity, execution::relationship_t,
-  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+  std::enable_if_t<execution::is_executor_v<Entity>>>
     : std::true_type {};
 
 } // namespace std

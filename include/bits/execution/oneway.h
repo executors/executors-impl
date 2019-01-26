@@ -30,8 +30,8 @@ constexpr oneway_t oneway;
 } // namespace execution
 
 template<class Entity>
-struct is_applicable_property<Entity, execution::oneway_t>
-  : std::true_type {};
+struct is_applicable_property<Entity, execution::oneway_t,
+  std::enable_if_t<execution::is_executor_v<Entity>>> : std::true_type {};
 
 } // namespace std
 

@@ -9,7 +9,10 @@ namespace execution {
 // Associated execution context.
 struct context_t;
 
-// Interface properties.
+// Executor concept property.
+struct executor_concept_t;
+
+// Concept-enforcing properties.
 struct oneway_t;
 struct bulk_oneway_t;
 
@@ -34,10 +37,12 @@ struct mapping_t;
 // Memory allocations.
 template<class ProtoAllocator> struct allocator_t;
 
-// Type traits to determine conformance to executor type requirements.
+// Type traits to determine conformance to executor concepts.
+template<class Executor> struct is_executor;
 template<class Executor> struct is_oneway_executor;
 template<class Executor> struct is_bulk_oneway_executor;
 
+template<class Executor> constexpr bool is_executor_v = is_executor<Executor>::value;
 template<class Executor> constexpr bool is_oneway_executor_v = is_oneway_executor<Executor>::value;
 template<class Executor> constexpr bool is_bulk_oneway_executor_v = is_bulk_oneway_executor<Executor>::value;
 
@@ -56,9 +61,11 @@ template<class InterfaceProperty, class... SupportableProperties>
 } // namespace execution
 } // namespace std
 
+#include <bits/execution/is_executor.h>
 #include <bits/execution/is_oneway_executor.h>
 #include <bits/execution/is_bulk_oneway_executor.h>
 #include <bits/execution/context.h>
+#include <bits/execution/executor_concept.h>
 #include <bits/execution/oneway.h>
 #include <bits/execution/bulk_oneway.h>
 #include <bits/execution/blocking.h>

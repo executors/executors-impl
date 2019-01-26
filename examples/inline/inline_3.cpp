@@ -6,6 +6,8 @@ namespace execution = std::execution;
 class inline_executor
 {
 public:
+  static constexpr auto query(execution::executor_concept_t) { return execution::bulk_oneway; }
+
   friend bool operator==(const inline_executor&, const inline_executor&) noexcept
   {
     return true;

@@ -39,6 +39,11 @@ public:
     std::vector<std::thread> threads_;
   };
 
+  static constexpr auto query(execution::executor_concept_t)
+  {
+    return execution::oneway;
+  }
+
   static thread_bag& query(execution::context_t)
   {
     static thread_bag threads;

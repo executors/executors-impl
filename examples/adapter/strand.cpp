@@ -71,6 +71,8 @@ public:
   {
   }
 
+  static constexpr auto query(execution::executor_concept_t) { return execution::oneway; }
+
   template <class Property> auto require(const Property& p) const
     -> strand<decltype(inner_declval<Property>().require(p)), Blocking>
       { return { state_, ex_.require(p) }; }

@@ -6,7 +6,8 @@ namespace execution = std::execution;
 class inline_executor
 {
 public:
-  static constexpr execution::blocking_t query(execution::blocking_t) { return execution::blocking.always; }
+  static constexpr auto query(execution::executor_concept_t) { return execution::oneway; }
+  static constexpr auto query(execution::blocking_t) { return execution::blocking.always; }
 
   friend bool operator==(const inline_executor&, const inline_executor&) noexcept
   {

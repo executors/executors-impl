@@ -71,6 +71,12 @@ inline constexpr blocking_adaptation_t::disallowed_t blocking_adaptation_t::disa
 inline constexpr blocking_adaptation_t::allowed_t blocking_adaptation_t::allowed;
 
 } // namespace execution
+
+template<class Entity>
+struct is_applicable_property<Entity, execution::blocking_adaptation_t,
+  std::enable_if_t<execution::is_executor_v<Entity>>>
+    : std::true_type {};
+
 } // namespace std
 
 #endif // STD_BITS_EXECUTION_BLOCKING_ADAPTATION_H_INCLUDED

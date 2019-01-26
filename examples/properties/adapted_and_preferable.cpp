@@ -9,10 +9,6 @@ namespace custom_props
 {
   struct tracing
   {
-    template<class Executor>
-      static constexpr bool is_applicable_v =
-        std::execution::is_oneway_executor_v<Executor>;
-
     static constexpr bool is_requirable_concept = false;
     static constexpr bool is_requirable = true;
     static constexpr bool is_preferable = true;
@@ -34,6 +30,9 @@ namespace custom_props
   public:
     tracing_executor(bool on, const InnerExecutor& ex)
       : tracing_(on), inner_ex_(ex) {}
+
+    // Executor concept.
+    static constexpr auto query(execution::executor_concept_t) { return execution::oneway; }
 
     // Intercept require requests for tracing.
     tracing_executor require(custom_props::tracing t) const { return { t.on, inner_ex_ }; }
@@ -86,13 +85,15 @@ namespace std
 {
   template<class Entity>
   struct is_applicable_property<Entity, ::custom_props::tracing,
-    std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+    std::enable_if_t<execution::is_executor_v<Entity>>>
       : std::true_type {};
 }
 
 class inline_executor
 {
 public:
+  static constexpr auto query(execution::executor_concept_t) { return execution::oneway; }
+
   inline_executor require(custom_props::tracing t) const { inline_executor tmp(*this); tmp.tracing_ = t.on; return tmp; }
 
   bool query(custom_props::tracing) const { return tracing_; }

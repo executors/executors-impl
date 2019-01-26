@@ -29,7 +29,7 @@ inline constexpr mapping_t::other_t mapping_t::other;
 
 template<class Entity>
 struct is_applicable_property<Entity, execution::mapping_t,
-  std::enable_if_t<execution::is_oneway_executor_v<Entity> || execution::is_bulk_oneway_executor_v<Entity>>>
+  std::enable_if_t<execution::is_executor_v<Entity>>>
     : std::true_type {};
 
 } // namespace std

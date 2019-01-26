@@ -414,6 +414,8 @@ public:
 
   // polymorphic executor operations:
 
+  static constexpr oneway_t query(executor_concept_t) { return {}; }
+
   template<class Property,
     class = typename std::enable_if<
       oneway_executor_impl::find_convertible_property_t<Property, SupportableProperties...>::is_requirable_concept

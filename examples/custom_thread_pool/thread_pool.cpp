@@ -15,6 +15,8 @@ struct nullary_function
 
 //------------------------------------------------------------------------------
 
+struct preallocated_oneway_t;
+
 template <class Executor, class = std::void_t<>>
 struct is_preallocated_oneway_executor
   : std::false_type
@@ -23,12 +25,13 @@ struct is_preallocated_oneway_executor
 
 template <class Executor>
 struct is_preallocated_oneway_executor<Executor,
-  std::void_t<decltype(
-    std::declval<const Executor&>().execute(
-      nullary_function(),
-      static_cast<void*>(nullptr),
-      static_cast<std::size_t>(0)))>>
-  : std::true_type
+    std::enable_if_t<
+      std::is_same_v<
+        std::decay_t<decltype(std::execution::executor_concept_t::static_query_v<Executor>)>,
+        preallocated_oneway_t
+      >
+    >
+  > : std::true_type
 {
 };
 
@@ -52,8 +55,9 @@ inline constexpr preallocated_oneway_t preallocated_oneway;
 namespace std
 {
   template<class Entity>
-  struct is_applicable_property<Entity, preallocated_oneway_t>
-    : std::true_type {};
+  struct is_applicable_property<Entity, preallocated_oneway_t,
+    std::enable_if_t<std::execution::is_executor<Entity>::value>>
+      : std::true_type {};
 }
 
 //------------------------------------------------------------------------------
@@ -104,6 +108,8 @@ namespace std
 
 //------------------------------------------------------------------------------
 
+struct intrusive_oneway_t;
+
 template <class Executor, class = std::void_t<>>
 struct is_intrusive_oneway_executor
   : std::false_type
@@ -112,11 +118,13 @@ struct is_intrusive_oneway_executor
 
 template <class Executor>
 struct is_intrusive_oneway_executor<Executor,
-  std::void_t<decltype(
-    std::declval<const Executor&>().submit(
-      std::declval<std::add_lvalue_reference_t<std::decay_t<decltype(
-        std::declval<const Executor&>().package(nullary_function()))>>>()))>>
-  : std::true_type
+    std::enable_if_t<
+      std::is_same_v<
+        std::decay_t<decltype(std::execution::executor_concept_t::static_query_v<Executor>)>,
+        intrusive_oneway_t
+      >
+    >
+  > : std::true_type
 {
 };
 
@@ -140,8 +148,9 @@ inline constexpr intrusive_oneway_t intrusive_oneway;
 namespace std
 {
   template<class Entity>
-  struct is_applicable_property<Entity, intrusive_oneway_t>
-    : std::true_type {};
+  struct is_applicable_property<Entity, intrusive_oneway_t,
+    std::enable_if_t<std::execution::is_executor<Entity>::value>>
+      : std::true_type {};
 }
 
 //------------------------------------------------------------------------------
@@ -182,6 +191,8 @@ public:
   {
   public:
     oneway_executor(const oneway_executor& other) noexcept = default;
+
+    static constexpr auto query(std::execution::executor_concept_t) { return std::execution::oneway; }
 
     template <class Function>
     void execute(Function f) const
@@ -248,6 +259,8 @@ public:
   public:
     preallocated_oneway_executor(const preallocated_oneway_executor& other) noexcept = default;
 
+    static constexpr auto query(std::execution::executor_concept_t) { return preallocated_oneway; }
+
     template <class Function>
     void execute(Function f, void* mem, std::size_t size) const
     {
@@ -305,6 +318,8 @@ public:
   {
   public:
     intrusive_oneway_executor(const intrusive_oneway_executor& other) noexcept = default;
+
+    static constexpr auto query(std::execution::executor_concept_t) { return intrusive_oneway; }
 
     template <class Function>
     function_with_intrusive_memory<Function> package(Function f) const

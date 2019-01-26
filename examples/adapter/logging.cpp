@@ -43,6 +43,8 @@ public:
     -> logging_executor<decltype(inner_declval<Property>().require(p))>
       { return { *prefix_, std::move(inner_ex_).require(p) }; }
 
+  static constexpr auto query(execution::executor_concept_t) { return execution::oneway; }
+
   template<class Property> auto query(const Property& p) const
     -> decltype(inner_declval<Property>().query(p))
       { return inner_ex_.query(p); }
@@ -63,21 +65,11 @@ public:
   {
     return inner_ex_.execute(this->wrap(std::move(f)));
   }
-
-  template <class Function>
-  auto twoway_execute(Function f) const
-    -> decltype(inner_declval<Function>().twoway_execute(std::move(f)))
-  {
-    return inner_ex_.twoway_execute(this->wrap(std::move(f)));
-  }
 };
 
 static_assert(execution::is_oneway_executor_v<
   logging_executor<static_thread_pool::executor_type>>,
     "one way executor requirements must be met");
-static_assert(execution::is_oneway_executor_v<
-  logging_executor<static_thread_pool::executor_type>>,
-    "two way executor requirements must be met");
 
 int main()
 {
