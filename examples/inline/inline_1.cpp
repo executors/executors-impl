@@ -25,7 +25,11 @@ public:
   }
 };
 
+#if defined(__cpp_concepts)
+static_assert(execution::OneWayExecutor<inline_executor>, "one way executor concept not satisfied");
+#else
 static_assert(execution::is_oneway_executor_v<inline_executor>, "one way executor requirements not met");
+#endif
 
 int main()
 {

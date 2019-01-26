@@ -20,10 +20,16 @@ namespace custom_props
 
 namespace std
 {
+#if defined(__cpp_concepts)
+  template<execution::Executor E>
+  struct is_applicable_property<E, ::custom_props::tracing>
+    : std::true_type {};
+#else
   template<class Entity>
   struct is_applicable_property<Entity, ::custom_props::tracing,
     std::enable_if_t<execution::is_executor_v<Entity>>>
       : std::true_type {};
+#endif
 }
 
 class inline_executor
@@ -56,7 +62,11 @@ private:
   bool tracing_;
 };
 
+#if defined(__cpp_concepts)
+static_assert(execution::OneWayExecutor<inline_executor>, "one way executor concept not satisfied");
+#else
 static_assert(execution::is_oneway_executor_v<inline_executor>, "one way executor requirements not met");
+#endif
 
 int main()
 {

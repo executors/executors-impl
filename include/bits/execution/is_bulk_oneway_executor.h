@@ -7,6 +7,17 @@
 
 namespace std {
 namespace execution {
+
+#if defined(__cpp_concepts)
+
+template<class T>
+concept bool BulkOneWayExecutor = Executor<T> && requires(T)
+{
+  { executor_concept_t::static_query_v<T> } -> bulk_oneway_t;
+};
+
+#else
+
 namespace is_bulk_oneway_executor_impl {
 
 template<class T, class = std::void_t<>>
@@ -21,6 +32,8 @@ struct eval<T,
 
 template<class Executor>
 struct is_bulk_oneway_executor : is_bulk_oneway_executor_impl::eval<Executor> {};
+
+#endif
 
 } // namespace execution
 } // namespace std

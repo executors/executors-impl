@@ -24,7 +24,11 @@ using bulk_oneway_executor = execution::executor<
 
 void oneway_executor_compile_test()
 {
+#if defined(__cpp_concepts)
+  static_assert(execution::OneWayExecutor<oneway_executor>, "must satisfy OneWayExecutor concept");
+#else
   static_assert(execution::is_oneway_executor_v<oneway_executor>, "is_oneway_executor must evaluate true");
+#endif
 
   static_thread_pool pool(0);
 
@@ -122,7 +126,11 @@ void oneway_executor_compile_test()
 
 void bulk_oneway_executor_compile_test()
 {
+#if defined(__cpp_concepts)
+  static_assert(execution::BulkOneWayExecutor<bulk_oneway_executor>, "must satisfy BulkOneWayExecutor concept");
+#else
   static_assert(execution::is_bulk_oneway_executor_v<bulk_oneway_executor>, "is_bulk_oneway_executor must evaluate true");
+#endif
 
   static_thread_pool pool(0);
 

@@ -64,7 +64,11 @@ class strand
   }
 
 public:
+#if defined(__cpp_concepts)
+  static_assert(execution::OneWayExecutor<Executor>, "strand requires a one way executor");
+#else
   static_assert(execution::is_oneway_executor_v<Executor>, "strand requires a one way executor");
+#endif
 
   explicit strand(Executor ex)
     : state_(std::make_shared<strand_state>()), ex_(std::move(ex))
@@ -135,9 +139,15 @@ public:
   }
 };
 
+#if defined(__cpp_concepts)
+static_assert(execution::OneWayExecutor<
+  strand<static_thread_pool::executor_type>>,
+    "one way executor concept not satisfied");
+#else
 static_assert(execution::is_oneway_executor_v<
   strand<static_thread_pool::executor_type>>,
     "one way executor requirements must be met");
+#endif
 
 struct foo
 {

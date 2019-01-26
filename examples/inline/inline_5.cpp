@@ -25,8 +25,13 @@ public:
   }
 };
 
+#if defined(__cpp_concepts)
+static_assert(execution::OneWayExecutor<inline_executor>, "one way executor concept not satisfied");
+static_assert(execution::BulkOneWayExecutor<decltype(std::require_concept(inline_executor(), execution::bulk_oneway))>, "bulk one way executor concept not satisfied");
+#else
 static_assert(execution::is_oneway_executor_v<inline_executor>, "one way executor requirements not met");
 static_assert(execution::is_bulk_oneway_executor_v<decltype(std::require_concept(inline_executor(), execution::bulk_oneway))>, "bulk one way executor requirements not met");
+#endif
 
 int main()
 {

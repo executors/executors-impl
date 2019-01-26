@@ -27,10 +27,15 @@ inline constexpr bulk_guarantee_t::parallel_t bulk_guarantee_t::parallel;
 
 } // namespace execution
 
+#if defined(__cpp_concepts)
+template<execution::Executor E>
+struct is_applicable_property<E, execution::bulk_guarantee_t> : std::true_type {};
+#else
 template<class Entity>
 struct is_applicable_property<Entity, execution::bulk_guarantee_t,
   std::enable_if_t<execution::is_executor_v<Entity>>>
     : std::true_type {};
+#endif
 
 } // namespace std
 

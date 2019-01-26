@@ -7,6 +7,17 @@
 
 namespace std {
 namespace execution {
+
+#if defined(__cpp_concepts)
+
+template<class T>
+concept bool Executor = requires(T)
+{
+  { executor_concept_t::static_query_v<T> };
+};
+
+#else
+
 namespace is_executor_impl {
 
 template<class T, class = std::void_t<>>
@@ -22,6 +33,8 @@ struct eval<T,
 
 template<class Executor>
 struct is_executor : is_executor_impl::eval<Executor> {};
+
+#endif
 
 } // namespace execution
 } // namespace std

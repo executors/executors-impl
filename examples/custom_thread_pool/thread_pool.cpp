@@ -8,14 +8,28 @@
 
 //------------------------------------------------------------------------------
 
+#if !defined(__cpp_concepts)
+
 struct nullary_function
 {
   void operator()() {};
 };
 
+#endif
+
 //------------------------------------------------------------------------------
 
 struct preallocated_oneway_t;
+
+#if defined(__cpp_concepts)
+
+template <class T>
+concept bool PreallocatedOneWayExecutor = std::execution::Executor<T> && requires(T)
+{
+  { std::execution::executor_concept_t::static_query_v<T> } -> preallocated_oneway_t;
+};
+
+#else
 
 template <class Executor, class = std::void_t<>>
 struct is_preallocated_oneway_executor
@@ -35,6 +49,8 @@ struct is_preallocated_oneway_executor<Executor,
 {
 };
 
+#endif
+
 struct preallocated_oneway_t
 {
   static constexpr bool is_requirable_concept = true;
@@ -43,9 +59,15 @@ struct preallocated_oneway_t
 
   using polymorphic_query_result_type = bool;
 
+#if defined(__cpp_concepts)
+  template<class Executor>
+    static constexpr bool static_query_v
+      = PreallocatedOneWayExecutor<Executor>;
+#else
   template<class Executor>
     static constexpr bool static_query_v
       = is_preallocated_oneway_executor<Executor>::value;
+#endif
 
   static constexpr bool value() { return true; }
 };
@@ -54,10 +76,16 @@ inline constexpr preallocated_oneway_t preallocated_oneway;
 
 namespace std
 {
+#if defined(__cpp_concepts)
+  template<std::execution::Executor E>
+  struct is_applicable_property<E, preallocated_oneway_t>
+    : std::true_type {};
+#else
   template<class Entity>
   struct is_applicable_property<Entity, preallocated_oneway_t,
     std::enable_if_t<std::execution::is_executor<Entity>::value>>
       : std::true_type {};
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -77,10 +105,16 @@ inline constexpr allocated_size_of_t<Function> allocated_size_of;
 
 namespace std
 {
+#if defined(__cpp_concepts)
+  template<PreallocatedOneWayExecutor E, class Function>
+  struct is_applicable_property<E, ::allocated_size_of_t<Function>>
+    : std::true_type {};
+#else
   template<class Entity, class Function>
   struct is_applicable_property<Entity, ::allocated_size_of_t<Function>,
     std::enable_if_t<is_preallocated_oneway_executor<Entity>::value>>
       : std::true_type {};
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -100,15 +134,31 @@ inline constexpr alignment_of_t<Function> alignment_of;
 
 namespace std
 {
+#if defined(__cpp_concepts)
+  template<PreallocatedOneWayExecutor E, class Function>
+  struct is_applicable_property<E, ::alignment_of_t<Function>>
+    : std::true_type {};
+#else
   template<class Entity, class Function>
   struct is_applicable_property<Entity, ::alignment_of_t<Function>,
     std::enable_if_t<is_preallocated_oneway_executor<Entity>::value>>
       : std::true_type {};
+#endif
 }
 
 //------------------------------------------------------------------------------
 
 struct intrusive_oneway_t;
+
+#if defined(__cpp_concepts)
+
+template <class T>
+concept bool IntrusiveOneWayExecutor = std::execution::Executor<T> && requires(T)
+{
+  { std::execution::executor_concept_t::static_query_v<T> } -> intrusive_oneway_t;
+};
+
+#else
 
 template <class Executor, class = std::void_t<>>
 struct is_intrusive_oneway_executor
@@ -128,6 +178,8 @@ struct is_intrusive_oneway_executor<Executor,
 {
 };
 
+#endif
+
 struct intrusive_oneway_t
 {
   static constexpr bool is_requirable_concept = true;
@@ -136,9 +188,15 @@ struct intrusive_oneway_t
 
   using polymorphic_query_result_type = bool;
 
+#if defined(__cpp_concepts)
+  template<class Executor>
+    static constexpr bool static_query_v
+      = IntrusiveOneWayExecutor<Executor>;
+#else
   template<class Executor>
     static constexpr bool static_query_v
       = is_intrusive_oneway_executor<Executor>::value;
+#endif
 
   static constexpr bool value() { return true; }
 };
@@ -147,10 +205,16 @@ inline constexpr intrusive_oneway_t intrusive_oneway;
 
 namespace std
 {
+#if defined(__cpp_concepts)
+  template<std::execution::Executor E>
+  struct is_applicable_property<E, intrusive_oneway_t>
+    : std::true_type {};
+#else
   template<class Entity>
   struct is_applicable_property<Entity, intrusive_oneway_t,
     std::enable_if_t<std::execution::is_executor<Entity>::value>>
       : std::true_type {};
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -517,6 +581,17 @@ private:
   bool stopped_ = false;
 };
 
+#if defined(__cpp_concepts)
+static_assert(std::execution::OneWayExecutor<thread_pool::executor_type>);
+static_assert(!std::execution::OneWayExecutor<thread_pool::preallocated_oneway_executor>);
+static_assert(!std::execution::OneWayExecutor<thread_pool::intrusive_oneway_executor>);
+static_assert(!PreallocatedOneWayExecutor<thread_pool::executor_type>);
+static_assert(PreallocatedOneWayExecutor<thread_pool::preallocated_oneway_executor>);
+static_assert(!PreallocatedOneWayExecutor<thread_pool::intrusive_oneway_executor>);
+static_assert(!IntrusiveOneWayExecutor<thread_pool::executor_type>);
+static_assert(!IntrusiveOneWayExecutor<thread_pool::preallocated_oneway_executor>);
+static_assert(IntrusiveOneWayExecutor<thread_pool::intrusive_oneway_executor>);
+#else
 static_assert(std::execution::is_oneway_executor_v<thread_pool::executor_type>);
 static_assert(!std::execution::is_oneway_executor_v<thread_pool::preallocated_oneway_executor>);
 static_assert(!std::execution::is_oneway_executor_v<thread_pool::intrusive_oneway_executor>);
@@ -526,6 +601,7 @@ static_assert(!is_preallocated_oneway_executor<thread_pool::intrusive_oneway_exe
 static_assert(!is_intrusive_oneway_executor<thread_pool::executor_type>::value);
 static_assert(!is_intrusive_oneway_executor<thread_pool::preallocated_oneway_executor>::value);
 static_assert(is_intrusive_oneway_executor<thread_pool::intrusive_oneway_executor>::value);
+#endif
 
 //------------------------------------------------------------------------------
 

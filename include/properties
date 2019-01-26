@@ -3,8 +3,13 @@
 
 namespace std {
 
+#if defined(__cpp_concepts)
+template<class Entity, class Property>
+  struct is_applicable_property;
+#else
 template<class Entity, class Property, class = void>
   struct is_applicable_property;
+#endif
 
 template<class Entity, class Property>
   constexpr bool is_applicable_property_v = is_applicable_property<Entity, Property>::value;

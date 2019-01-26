@@ -72,10 +72,15 @@ inline constexpr blocking_adaptation_t::allowed_t blocking_adaptation_t::allowed
 
 } // namespace execution
 
+#if defined(__cpp_concepts)
+template<execution::Executor E>
+struct is_applicable_property<E, execution::blocking_adaptation_t> : std::true_type {};
+#else
 template<class Entity>
 struct is_applicable_property<Entity, execution::blocking_adaptation_t,
   std::enable_if_t<execution::is_executor_v<Entity>>>
     : std::true_type {};
+#endif
 
 } // namespace std
 

@@ -29,10 +29,16 @@ namespace custom_props {
 
 namespace std
 {
+#if defined(__cpp_concepts)
+  template<execution::Executor E>
+  struct is_applicable_property<E, ::custom_props::priority>
+    : std::true_type {};
+#else
   template<class Entity>
   struct is_applicable_property<Entity, ::custom_props::priority,
     std::enable_if_t<execution::is_executor_v<Entity>>>
       : std::true_type {};
+#endif
 }
 
 class priority_scheduler

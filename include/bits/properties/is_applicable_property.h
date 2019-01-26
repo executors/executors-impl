@@ -5,8 +5,13 @@
 
 namespace std {
 
-template<class Entity, class Properties, class>
+#if defined(__cpp_concepts)
+template<class Entity, class Property>
 struct is_applicable_property : std::false_type {};
+#else
+template<class Entity, class Property, class>
+struct is_applicable_property : std::false_type {};
+#endif
 
 } // namespace std
 

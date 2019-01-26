@@ -42,9 +42,14 @@ constexpr allocator_t<void> allocator;
 
 } // namespace execution
 
+#if defined(__cpp_concepts)
+template<execution::Executor E, class T>
+struct is_applicable_property<E, execution::allocator_t<T>> : std::true_type {};
+#else
 template<class Entity, class T>
 struct is_applicable_property<Entity, execution::allocator_t<T>,
   std::enable_if_t<execution::is_executor_v<Entity>>> : std::true_type {};
+#endif
 
 } // namespace std
 

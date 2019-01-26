@@ -76,17 +76,29 @@ namespace custom_props
     }
   };
 
+#if defined(__cpp_concepts)
+  template <execution::Executor E>
+    tracing_executor<E>
+      require(E ex, tracing t) { return { t.on, std::move(ex) }; }
+#else
   template <class Executor>
     tracing_executor<Executor>
       require(Executor ex, tracing t) { return { t.on, std::move(ex) }; }
+#endif
 }
 
 namespace std
 {
+#if defined(__cpp_concepts)
+  template<execution::Executor E>
+  struct is_applicable_property<E, ::custom_props::tracing>
+    : std::true_type {};
+#else
   template<class Entity>
   struct is_applicable_property<Entity, ::custom_props::tracing,
     std::enable_if_t<execution::is_executor_v<Entity>>>
       : std::true_type {};
+#endif
 }
 
 class inline_executor
@@ -119,8 +131,13 @@ private:
   bool tracing_;
 };
 
+#if defined(__cpp_concepts)
+static_assert(execution::OneWayExecutor<inline_executor>, "one way executor concept not satisfied");
+static_assert(execution::OneWayExecutor<custom_props::tracing_executor<static_thread_pool::executor_type>>, "one way executor concept not satisfied");
+#else
 static_assert(execution::is_oneway_executor_v<inline_executor>, "one way executor requirements not met");
 static_assert(execution::is_oneway_executor_v<custom_props::tracing_executor<static_thread_pool::executor_type>>, "one way executor requirements not met");
+#endif
 
 int main()
 {

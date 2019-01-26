@@ -44,7 +44,11 @@ void static_thread_pool_oneway_executor_compile_test(Executor ex1)
 {
   static_thread_pool_executor_compile_test(ex1);
 
+#if defined(__cpp_concepts)
+  static_assert(execution::OneWayExecutor<Executor>, "must satisfy OneWayExecutor concept");
+#else
   static_assert(execution::is_oneway_executor_v<Executor>, "is_oneway_executor must evaluate true");
+#endif
 
   const Executor& cex1 = ex1;
 
@@ -83,7 +87,11 @@ void static_thread_pool_bulk_oneway_executor_compile_test(Executor ex1)
 {
   static_thread_pool_executor_compile_test(ex1);
 
+#if defined(__cpp_concepts)
+  static_assert(execution::BulkOneWayExecutor<Executor>, "must satisfy BulkOneWayExecutor concept");
+#else
   static_assert(execution::is_bulk_oneway_executor_v<Executor>, "is_bulk_oneway_executor must evaluate true");
+#endif
   static_assert(std::is_same<execution::executor_shape_t<Executor>, std::size_t>::value, "shape type must be size_t");
   static_assert(std::is_same<execution::executor_index_t<Executor>, std::size_t>::value, "index type must be size_t");
 
