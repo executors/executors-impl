@@ -143,8 +143,6 @@ Default&& query_or(const T&, const Property&, Default&& result)
 template<class ForwardIterator, class Size>
 std::vector<ForwardIterator> partition_into_subranges(ForwardIterator first, Size n, std::size_t num_subranges)
 {
-  ForwardIterator first_ = first;
-
   // how large should each subrange be?
   std::size_t subrange_size = (n + num_subranges - 1) / num_subranges;
 
