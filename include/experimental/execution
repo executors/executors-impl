@@ -72,6 +72,9 @@ struct mapping_t;
 // Memory allocations.
 template<class ProtoAllocator> struct allocator_t;
 
+// Occupancy.
+struct occupancy_t;
+
 // Type traits to determine conformance to executor type requirements.
 template<class Executor> struct is_oneway_executor;
 template<class Executor> struct is_twoway_executor;
@@ -118,6 +121,7 @@ template<class InnerProperty> struct prefer_only;
 #include <experimental/bits/blocking.h>
 #include <experimental/bits/blocking_adaptation.h>
 #include <experimental/bits/relationship.h>
+#include <experimental/bits/occupancy.h>
 #include <experimental/bits/outstanding_work.h>
 #include <experimental/bits/bulk_guarantee.h>
 #include <experimental/bits/mapping.h>

@@ -77,6 +77,9 @@ class static_thread_pool
     ProtoAllocator query(const execution::allocator_t<ProtoAllocator>&) const noexcept { return allocator_; }
     ProtoAllocator query(const execution::allocator_t<void>&) const noexcept { return allocator_; }
 
+    // Occupancy.
+    std::size_t query(const execution::occupancy_t&) const noexcept { return pool_->threads_.size(); }
+
     bool running_in_this_thread() const noexcept { return pool_->running_in_this_thread(); }
 
     friend bool operator==(const executor_impl& a, const executor_impl& b) noexcept
