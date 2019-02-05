@@ -212,7 +212,7 @@ T reduce(std::forward_iterator_tag, ExecutionPolicy&& policy, ForwardIterator fi
 template<class ExecutionPolicy, class ForwardIterator, class T, class BinaryOperation>
 T reduce(ExecutionPolicy&& policy, ForwardIterator first, ForwardIterator last, T init, BinaryOperation binary_op)
 {
-  return impl::reduce(typename std::iterator_traits<ForwardIterator>::iterator_category(), std::forward<ExecutionPolicy>(policy), first, last, init, binary_op);
+  return impl::reduce(typename std::iterator_traits<ForwardIterator>::iterator_category(), std::forward<ExecutionPolicy>(policy), impl::make_noexcept_iterator(first), impl::make_noexcept_iterator(last), init, impl::make_noexcept_function(binary_op));
 }
 
 

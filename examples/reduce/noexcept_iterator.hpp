@@ -74,7 +74,7 @@ class noexcept_iterator
       return iterator_.operator->();
     }
 
-    noexcept_iterator operator++(int) const noexcept
+    noexcept_iterator operator++(int) noexcept
     {
       noexcept_iterator result(*this);
       operator++();
@@ -88,7 +88,7 @@ class noexcept_iterator
       return *this;
     }
 
-    noexcept_iterator operator--(int) const noexcept
+    noexcept_iterator operator--(int) noexcept
     {
       noexcept_iterator result(*this);
       operator--();
@@ -104,12 +104,12 @@ class noexcept_iterator
 
     friend noexcept_iterator operator+(const noexcept_iterator& i, const difference_type& n) noexcept
     {
-      return {i.iterator_ + n};
+      return noexcept_iterator{i.iterator_ + n};
     }
 
     friend noexcept_iterator operator+(const difference_type& n, const noexcept_iterator& i) noexcept
     {
-      return {n + i.iterator_};
+      return noexcept_iterator{n + i.iterator_};
     }
 
     noexcept_iterator& operator-=(const difference_type& n) noexcept
