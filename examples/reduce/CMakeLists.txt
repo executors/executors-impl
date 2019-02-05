@@ -1,0 +1,1 @@
+executors_add_example(reduce_1)
