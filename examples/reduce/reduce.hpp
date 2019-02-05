@@ -26,9 +26,15 @@ struct reduce_state
       sums(num_partial_sums)
   {}
 
+  // XXX implement a move ctor to allow std::make_shared<reduce_state<T>>(shared_factory()) to work
+  reduce_state(reduce_state&& other)
+    : num_outstanding(other.sums.size()),
+      sums(std::move(other.sums))
+  {}
+
   std::atomic<int> num_outstanding;
 
-  // XXX we should just make this a vector of optionals
+  // XXX we should just make this a vector of optionals to avoid requiring DefaultConstructible T
   std::vector<T> sums;
 };
 
@@ -49,7 +55,7 @@ T reduce(std::random_access_iterator_tag, ExecutionPolicy&& policy, RandomAccess
     size_t n = last - first;
 
     // choose a number of subranges
-    size_t num_subranges = std::min(n, query_or(ex, execution::occupancy, 1));
+    size_t num_subranges = std::min(n, query_or(ex, execution::occupancy, size_t(1)));
 
     // how large should each subrange be?
     size_t subrange_size = (n + num_subranges - 1) / num_subranges;
@@ -129,6 +135,11 @@ struct partitions_and_reduce_state
       state(partitions_begin.size() - 1)
   {}
 
+  partitions_and_reduce_state(partitions_and_reduce_state&& other)
+    : partitions_begin(std::move(other.partitions_begin)),
+      state(std::move(other.state))
+  {}
+
   std::vector<ForwardIterator> partitions_begin;
   reduce_state<T> state;
 };
@@ -150,7 +161,7 @@ T reduce(std::forward_iterator_tag, ExecutionPolicy&& policy, ForwardIterator fi
     size_t n = std::distance(first, last);
 
     // choose a number of subranges
-    size_t num_subranges = std::min(n, query_or(ex, execution::occupancy, 1));
+    size_t num_subranges = std::min(n, query_or(ex, execution::occupancy, size_t(1)));
 
     // deduce the type of each partial sum
     using partial_sum_type = std::invoke_result_t<
