@@ -51,14 +51,27 @@ private:
     template<class Function, class SharedFactory>
     void bulk_execute(Function f, std::size_t n, SharedFactory sf) const
     {
+      auto shared_index = std::make_shared<std::atomic<std::size_t>>(0);
       auto shared_state = std::make_shared<decltype(sf())>(sf());
       for (std::size_t i = 0; i < n; ++i)
       {
-        this->executor_.execute(
-            [f = std::move(f), i, shared_state]() mutable
-            {
-              f(i, *shared_state);
-            });
+        try
+        {
+          this->executor_.execute(
+              [f = std::move(f), shared_index, n, shared_state]() mutable
+              {
+                for (std::size_t index = shared_index->load(); index < n;)
+                  if (shared_index->compare_exchange_weak(index, index + 1))
+                    f(index, *shared_state);
+              });
+        }
+        catch (...)
+        {
+          if (i == 0)
+            throw;
+          else
+            break;
+        }
       }
     }
   };
