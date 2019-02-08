@@ -8,13 +8,18 @@
 #include <cassert>
 
 
-namespace execution = std::experimental::execution;
+namespace execution = std::execution;
 
 
 // creating EAs with this executor always fails via exception
 class throwing_executor
 {
   public:
+    constexpr static auto query(execution::executor_concept_t)
+    {
+      return execution::bulk_oneway;
+    }
+
     friend bool operator==(const throwing_executor&, const throwing_executor&) noexcept
     {
       return true;
@@ -23,16 +28,6 @@ class throwing_executor
     friend bool operator!=(const throwing_executor&, const throwing_executor&) noexcept
     {
       return false;
-    }
-
-    throwing_executor require(execution::oneway_t) const
-    {
-      return *this;
-    }
-
-    throwing_executor require(execution::bulk_t) const
-    {
-      return *this;
     }
 
     constexpr static execution::bulk_guarantee_t::parallel_t query(execution::bulk_guarantee_t)
@@ -65,7 +60,7 @@ int main()
 
     std::vector<int> vec(10);
 
-    std::experimental::static_thread_pool pool(4);
+    std::static_thread_pool pool(4);
 
     for_each_n(par.on(throwing_executor()), vec.begin(), vec.size(), [](int& x)
     {
@@ -80,7 +75,7 @@ int main()
 
     std::list<int> lst(10);
 
-    std::experimental::static_thread_pool pool(4);
+    std::static_thread_pool pool(4);
 
     for_each_n(par.on(throwing_executor()), lst.begin(), lst.size(), [](int& x)
     {

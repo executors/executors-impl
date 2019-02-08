@@ -1,0 +1,41 @@
+#ifndef STD_BITS_EXECUTION_IS_ONEWAY_EXECUTOR_H_INCLUDED
+#define STD_BITS_EXECUTION_IS_ONEWAY_EXECUTOR_H_INCLUDED
+
+#include <type_traits>
+#include <utility>
+#include <bits/execution/executor_concept.h>
+
+namespace std {
+namespace execution {
+
+#if defined(__cpp_concepts)
+
+template<class T>
+concept bool OneWayExecutor = Executor<T> && requires(T)
+{
+  { executor_concept_t::static_query_v<T> } -> oneway_t;
+};
+
+#else
+
+namespace is_oneway_executor_impl {
+
+template<class T, class = std::void_t<>>
+struct eval : std::false_type {};
+
+template<class T>
+struct eval<T,
+    std::enable_if_t<std::is_same_v<std::decay_t<decltype(executor_concept_t::static_query_v<T>)>, oneway_t>>
+	> : std::true_type {};
+
+} // namespace is_oneway_executor_impl
+
+template<class Executor>
+struct is_oneway_executor : is_oneway_executor_impl::eval<Executor> {};
+
+#endif
+
+} // namespace execution
+} // namespace std
+
+#endif // STD_BITS_EXECUTION_IS_ONEWAY_EXECUTOR_H_INCLUDED

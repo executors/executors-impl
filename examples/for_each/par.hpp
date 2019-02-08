@@ -1,7 +1,7 @@
 #pragma once
 
-#include <experimental/execution>
-#include <experimental/thread_pool>
+#include <execution>
+#include <thread_pool>
 #include <thread>
 #include <algorithm>
 
@@ -49,13 +49,15 @@ basic_execution_policy<ER,E> make_basic_execution_policy(const E& ex)
 
 template<class Executor, class ExecutionRequirement>
 constexpr bool satisfies_cpp20_on_requirements_v =
-  std::experimental::execution::can_require_v<
+  std::can_require_concept_v<
+    Executor
+    , std::execution::bulk_oneway_t
+> &&
+  std::can_require_v<
     Executor
     , ExecutionRequirement
-    , std::experimental::execution::bulk_t
-    , std::experimental::execution::oneway_t
-    , std::experimental::execution::blocking_t::always_t
-    , std::experimental::execution::mapping_t::thread_t
+    , std::execution::blocking_t::always_t
+    , std::execution::mapping_t::thread_t
 >;
 
 
@@ -65,7 +67,7 @@ constexpr bool satisfies_cpp20_on_requirements_v =
 class parallel_policy
 {
   public:
-    static constexpr std::experimental::execution::bulk_guarantee_t::parallel_t execution_requirement{};
+    static constexpr std::execution::bulk_guarantee_t::parallel_t execution_requirement{};
 
     template<class Executor,
              class = std::enable_if_t<
@@ -85,7 +87,7 @@ namespace impl
 {
 
 
-std::experimental::static_thread_pool system_thread_pool{std::max(1u,std::thread::hardware_concurrency())};
+std::static_thread_pool system_thread_pool{std::max(1u,std::thread::hardware_concurrency())};
 
 
 } // end impl

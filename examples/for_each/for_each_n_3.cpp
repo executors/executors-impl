@@ -8,12 +8,17 @@
 #include <cassert>
 
 
-namespace execution = std::experimental::execution;
+namespace execution = std::execution;
 
 
 class inline_executor
 {
   public:
+    constexpr static auto query(execution::executor_concept_t)
+    {
+      return execution::oneway;
+    }
+
     friend bool operator==(const inline_executor&, const inline_executor&) noexcept
     {
       return true;
@@ -22,11 +27,6 @@ class inline_executor
     friend bool operator!=(const inline_executor&, const inline_executor&) noexcept
     {
       return false;
-    }
-
-    inline_executor require(execution::oneway_t) const
-    {
-      return *this;
     }
 
     constexpr static execution::bulk_guarantee_t::parallel_t query(execution::bulk_guarantee_t)

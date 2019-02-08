@@ -1,18 +1,19 @@
-#include <experimental/thread_pool>
+#include <thread_pool>
 #include <iostream>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 using executor = execution::executor<
-  execution::oneway_t,
-  execution::bulk_t,
+  execution::bulk_oneway_t,
   execution::blocking_t::never_t>;
 
 int main()
 {
   static_thread_pool pool{1};
-  executor ex = execution::require(pool.executor(), execution::blocking.never);
+  executor ex = std::require(
+      std::require_concept(pool.executor(), execution::bulk_oneway),
+      execution::blocking.never);
   ex.bulk_execute([](int n, int&){ std::cout << "part " << n << "\n"; }, 8, []{ return 0; });
   pool.wait();
 }

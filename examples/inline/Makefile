@@ -3,10 +3,7 @@ EXAMPLES = \
 	inline_2 \
 	inline_3 \
 	inline_4 \
-	inline_5 \
-	inline_6 \
-	inline_7 \
-	inline_8
+	inline_5
 
 CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../../include
 

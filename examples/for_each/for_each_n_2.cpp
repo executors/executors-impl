@@ -1,7 +1,7 @@
 #include "for_each_n.hpp"
 #include "par.hpp"
 #include "throwing_iterator.hpp"
-#include <experimental/thread_pool>
+#include <thread_pool>
 #include <vector>
 #include <list>
 #include <algorithm>
@@ -16,7 +16,7 @@ int main()
 
     std::vector<int> vec(10);
 
-    std::experimental::static_thread_pool pool(4);
+    std::static_thread_pool pool(4);
 
     for_each_n(par.on(pool.executor()), vec.begin(), vec.size(), [](int& x)
     {
@@ -31,7 +31,7 @@ int main()
 
     std::list<int> lst(10);
 
-    std::experimental::static_thread_pool pool(4);
+    std::static_thread_pool pool(4);
 
     for_each_n(par.on(pool.executor()), lst.begin(), lst.size(), [](int& x)
     {
@@ -50,7 +50,7 @@ int main()
 
   //  std::vector<int> vec(10);
 
-  //  std::experimental::static_thread_pool pool(4);
+  //  std::static_thread_pool pool(4);
 
   //  for_each_n(par.on(pool.executor()), vec.begin(), vec.size(), [](int& x)
   //  {
@@ -68,7 +68,7 @@ int main()
 
   //  std::list<int> lst(10);
 
-  //  std::experimental::static_thread_pool pool(4);
+  //  std::static_thread_pool pool(4);
 
   //  for_each_n(par.on(pool.executor()), lst.begin(), lst.size(), [](int& x)
   //  {
@@ -86,7 +86,7 @@ int main()
 
   //  std::vector<int> vec(10);
 
-  //  std::experimental::static_thread_pool pool(4);
+  //  std::static_thread_pool pool(4);
 
   //  for_each_n(par.on(pool.executor()), make_throwing_iterator(vec.begin()), vec.size(), [](int& x)
   //  {
@@ -102,7 +102,7 @@ int main()
 
   //  std::list<int> lst(10);
 
-  //  std::experimental::static_thread_pool pool(4);
+  //  std::static_thread_pool pool(4);
 
   //  for_each_n(par.on(pool.executor()), make_throwing_iterator(lst.begin()), lst.size(), [](int& x)
   //  {

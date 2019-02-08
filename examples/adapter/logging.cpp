@@ -1,12 +1,11 @@
 #include <cassert>
-#include <experimental/thread_pool>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
-using std::experimental::executors_v1::future;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 template <class InnerExecutor>
 class logging_executor
@@ -44,6 +43,8 @@ public:
     -> logging_executor<decltype(inner_declval<Property>().require(p))>
       { return { *prefix_, std::move(inner_ex_).require(p) }; }
 
+  static constexpr auto query(execution::executor_concept_t) { return execution::oneway; }
+
   template<class Property> auto query(const Property& p) const
     -> decltype(inner_declval<Property>().query(p))
       { return inner_ex_.query(p); }
@@ -64,34 +65,27 @@ public:
   {
     return inner_ex_.execute(this->wrap(std::move(f)));
   }
-
-  template <class Function>
-  auto twoway_execute(Function f) const
-    -> decltype(inner_declval<Function>().twoway_execute(std::move(f)))
-  {
-    return inner_ex_.twoway_execute(this->wrap(std::move(f)));
-  }
 };
 
+#if defined(__cpp_concepts)
+static_assert(execution::OneWayExecutor<
+  logging_executor<static_thread_pool::executor_type>>,
+    "one way executor concept not satisfied");
+#else
 static_assert(execution::is_oneway_executor_v<
   logging_executor<static_thread_pool::executor_type>>,
     "one way executor requirements must be met");
-static_assert(execution::is_oneway_executor_v<
-  logging_executor<static_thread_pool::executor_type>>,
-    "two way executor requirements must be met");
+#endif
 
 int main()
 {
   static_thread_pool pool{1};
   logging_executor<static_thread_pool::executor_type> ex1("LOG", pool.executor());
-  assert(&execution::query(ex1, execution::context) == &pool);
+  assert(&std::query(ex1, execution::context) == &pool);
   ex1.execute([]{ std::cout << "we made it\n"; });
-  auto ex2 = execution::require(ex1, execution::blocking.always);
+  auto ex2 = std::require(ex1, execution::blocking.always);
   ex2.execute([]{ std::cout << "we made it again\n"; });
-  auto ex3 = execution::require(ex2, execution::blocking.never, execution::relationship.continuation);
+  auto ex3 = std::require(ex2, execution::blocking.never, execution::relationship.continuation);
   ex3.execute([]{ std::cout << "and again\n"; });
-  auto ex4 = execution::require(ex1, execution::twoway);
-  future<int> f = ex4.twoway_execute([]{ std::cout << "computing result\n"; return 42; });
   pool.wait();
-  std::cout << "result is " << f.get() << "\n";
 }

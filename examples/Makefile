@@ -1,16 +1,18 @@
 DIRS = \
 	actor \
 	adapter \
-	async \
 	async_ops \
-	exception \
 	for_each \
 	properties \
 	inline \
-	invoke \
 	nested \
 	simple \
 	pipeline
+
+DISABLED = \
+	async \
+	invoke \
+	for_each
 
 .PHONY: all clean
 

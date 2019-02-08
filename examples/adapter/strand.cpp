@@ -1,12 +1,12 @@
 #include <cassert>
 #include <chrono>
-#include <experimental/thread_pool>
 #include <iostream>
 #include <mutex>
 #include <string>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 struct strand_state
 {
@@ -64,12 +64,18 @@ class strand
   }
 
 public:
+#if defined(__cpp_concepts)
+  static_assert(execution::OneWayExecutor<Executor>, "strand requires a one way executor");
+#else
   static_assert(execution::is_oneway_executor_v<Executor>, "strand requires a one way executor");
+#endif
 
   explicit strand(Executor ex)
     : state_(std::make_shared<strand_state>()), ex_(std::move(ex))
   {
   }
+
+  static constexpr auto query(execution::executor_concept_t) { return execution::oneway; }
 
   template <class Property> auto require(const Property& p) const
     -> strand<decltype(inner_declval<Property>().require(p)), Blocking>
@@ -133,9 +139,15 @@ public:
   }
 };
 
+#if defined(__cpp_concepts)
+static_assert(execution::OneWayExecutor<
+  strand<static_thread_pool::executor_type>>,
+    "one way executor concept not satisfied");
+#else
 static_assert(execution::is_oneway_executor_v<
   strand<static_thread_pool::executor_type>>,
     "one way executor requirements must be met");
+#endif
 
 struct foo
 {
@@ -164,8 +176,8 @@ int main()
 {
   static_thread_pool pool{2};
   strand<static_thread_pool::executor_type> s1(pool.executor());
-  assert(&execution::query(s1, execution::context) == &pool);
-  s1.require(execution::blocking.never).execute(foo{s1});
-  s1.require(execution::blocking.possibly).execute([]{ std::cout << "After 0, before 1\n"; });
+  assert(&std::query(s1, execution::context) == &pool);
+  std::require(s1, execution::blocking.never).execute(foo{s1});
+  std::require(s1, execution::blocking.possibly).execute([]{ std::cout << "After 0, before 1\n"; });
   pool.wait();
 }

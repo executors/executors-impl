@@ -3,7 +3,7 @@
 #include "query_or.hpp"
 #include "noexcept_function.hpp"
 #include "noexcept_iterator.hpp"
-#include <experimental/execution>
+#include <execution>
 #include <iterator>
 #include <vector>
 
@@ -27,10 +27,14 @@ void for_each_n(std::random_access_iterator_tag, ExecutionPolicy&& policy, Rando
 
   try
   {
-    namespace execution = std::experimental::execution;
+    namespace execution = std::execution;
 
     // enforce requirements
-    auto ex = execution::require(policy.executor(), policy.execution_requirement, execution::bulk, execution::oneway, execution::blocking.always);
+    auto ex = std::require(
+      std::require_concept(policy.executor(), execution::bulk_oneway),
+      policy.execution_requirement,
+      execution::blocking.always
+    );
 
     // create agents
     // note that this throws only upon failure to create EAs
@@ -95,10 +99,14 @@ void for_each_n(std::forward_iterator_tag, ExecutionPolicy&& policy, ForwardIter
 
   try
   {
-    namespace execution = std::experimental::execution; 
+    namespace execution = std::execution; 
 
     // enforce requirements
-    auto ex = execution::require(policy.executor(), policy.execution_requirement, execution::bulk, execution::oneway, execution::blocking.always);
+    auto ex = std::require(
+      std::require_concept(policy.executor(), execution::bulk_oneway),
+      policy.execution_requirement,
+      execution::blocking.always
+    );
 
     // choose a number of subranges
     size_t num_subranges = std::min(n, query_or(ex, execution::occupancy, Size(1)));

@@ -1,10 +1,10 @@
 #include <chrono>
-#include <experimental/thread_pool>
 #include <iostream>
 #include <thread>
+#include <thread_pool>
 
-namespace execution = std::experimental::execution;
-using std::experimental::static_thread_pool;
+namespace execution = std::execution;
+using std::static_thread_pool;
 
 // An operation that doubles a value asynchronously.
 template <class TaskExecutor, class CompletionExecutor, class CompletionHandler>
@@ -15,7 +15,10 @@ void my_twoway_operation_1(const TaskExecutor& tex, int n,
   {
     // Nothing to do. Operation finishes immediately.
     // Specify non-blocking to prevent stack overflow.
-    cex.require(execution::blocking.never).execute(
+    std::require(
+        std::require_concept(cex, execution::oneway),
+        execution::blocking.never
+      ).execute(
         [h = std::move(h), n]() mutable
         {
           h(n);
@@ -24,12 +27,18 @@ void my_twoway_operation_1(const TaskExecutor& tex, int n,
   else
   {
     // Simulate an asynchronous operation.
-    tex.require(execution::blocking.never).execute(
-        [n, cex = execution::prefer(cex, execution::outstanding_work.tracked), h = std::move(h)]() mutable
+    std::require(
+        std::require_concept(tex, execution::oneway),
+        execution::blocking.never
+      ).execute(
+        [n, cex = std::prefer(cex, execution::outstanding_work.tracked), h = std::move(h)]() mutable
         {
           int result = n * 2;
           std::this_thread::sleep_for(std::chrono::seconds(1)); // Simulate long running work.
-          execution::prefer(cex, execution::blocking.possibly).execute(
+          std::prefer(
+              std::require_concept(cex, execution::oneway),
+              execution::blocking.possibly
+            ).execute(
               [h = std::move(h), result]() mutable
               {
                 h(result);
@@ -68,10 +77,10 @@ void my_twoway_operation_2(const TaskExecutor& tex, int n, int m,
   // Intermediate steps of the composed operation are always continuations,
   // so we save the stored executors with that attribute rebound in.
   my_twoway_operation_1(tex, n, cex,
-    my_twoway_operation_2_impl<decltype(execution::prefer(tex, execution::relationship.continuation)),
-      decltype(execution::prefer(cex, execution::relationship.continuation)), CompletionHandler>{
-        execution::prefer(tex, execution::relationship.continuation), 0, m,
-        execution::prefer(cex, execution::relationship.continuation), std::move(h)});
+    my_twoway_operation_2_impl<decltype(std::prefer(tex, execution::relationship.continuation)),
+      decltype(std::prefer(cex, execution::relationship.continuation)), CompletionHandler>{
+        std::prefer(tex, execution::relationship.continuation), 0, m,
+        std::prefer(cex, execution::relationship.continuation), std::move(h)});
 }
 
 int main()

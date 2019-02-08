@@ -1,7 +1,9 @@
 EXAMPLES = \
-	for_each_1 \
-	for_each_2 \
-	for_each_3
+	for_each_n_1 \
+	for_each_n_2 \
+	for_each_n_3 \
+	for_each_n_4 \
+	for_each_n_5
 
 CXXFLAGS = -std=c++17 -pthread -Wall -Wextra -I../../include
 
