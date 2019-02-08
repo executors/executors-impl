@@ -40,6 +40,7 @@ private:
   public:
     using impl::adapter<adapter, Executor>::adapter;
     using impl::adapter<adapter, Executor>::require;
+    using impl::adapter<adapter, Executor>::query;
 
     static constexpr bulk_oneway_t query(executor_concept_t) { return {}; }
 
